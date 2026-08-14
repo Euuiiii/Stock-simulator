@@ -10,8 +10,9 @@
   <a href="https://www.bilibili.com/video/BV1sWNwzVEek/" target="_blank">
     <img src="./images/cover.jpg" width="600" alt="全新股票模拟器演示视频">
   </a>
-  <p>🎬 <b><a href="https://www.bilibili.com/video/BV1sWNwzVEek/" target="_blank">点击此处前往 B 站观看《全新股票模拟器》完整演示视频</a></b></p>
+  <p>🎬 <b><a href="https://www.bilibili.com/video/BV1sWNwzVEek/" target="_blank">点击此处前往Bilibili观看完整演示视频</a></b></p>
 </div>
+
 ---
 
 ## 目录
