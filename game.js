@@ -121,6 +121,11 @@ class StockSimulator {
             manualSet: false   // 标记是否手动设置过时间
         };
         
+        // 时间控制（设置面板新增功能）
+        this.gameTimePaused = false;  // 是否暂停游戏时间推进
+        this.skipMode = false;        // 是否正在加速跳过时间
+        this.skipTicksRemaining = 0;  // 跳过剩余需要推进的tick数
+        
         // 图表缩放状态
         this.chartState = {
             scaleX: 1,        // X轴缩放比例
@@ -424,6 +429,10 @@ class StockSimulator {
             }
             this.startMarketSimulation();
         });
+
+        // 时间控制（设置面板）
+        document.getElementById('time-pause-btn').addEventListener('click', () => this.toggleTimePause());
+        document.getElementById('time-skip-btn').addEventListener('click', () => this.skipTime());
 
         // 主题切换
         document.getElementById('theme-toggle').addEventListener('click', () => this.toggleTheme());
@@ -1020,6 +1029,9 @@ class StockSimulator {
 
         this.currentUser.saves.push(save);
         this.saveUsers();
+        // 仅新开局时随机设置一个交易时段内的游戏时间
+        // （切换/加载已有存档时不再重置时间，避免时间被强行重置引发一系列问题）
+        this.randomizeGameTime();
         this.loadSave(this.currentUser.saves.length - 1);
     }
 
@@ -1028,8 +1040,8 @@ class StockSimulator {
         this.currentSave = this.currentUser.saves[index];
         this.currentSaveIndex = index;
         
-        // 随机设置游戏交易日时间（9:30-11:30之间）
-        this.randomizeGameTime();
+        // 取消进行中的时间跳过，避免跳过流程与新存档互相干扰
+        this.cancelSkip();
         
         // 确保必要字段存在（兼容旧存档）
         if (!this.currentSave.watchlist) {
@@ -1395,7 +1407,10 @@ class StockSimulator {
         // 获取当前状态文本
         let statusText = '正常交易时间';
         let statusClass = 'status';
-        if (totalMinutes >= 570 && totalMinutes <= 575) { // 9:30-9:35
+        if (this.gameTimePaused) {
+            statusText = '已暂停';
+            statusClass = 'status paused';
+        } else if (totalMinutes >= 570 && totalMinutes <= 575) { // 9:30-9:35
             statusText = '早起的鸟儿时间';
             statusClass = 'status early';
         } else if (totalMinutes >= 695 && totalMinutes <= 700) { // 11:35-11:40
@@ -1421,6 +1436,12 @@ class StockSimulator {
         }
         if (portfolioStatusEl) {
             portfolioStatusEl.textContent = statusText;
+        }
+        
+        // 同步设置面板暂停/继续按钮的文案
+        const pauseBtn = document.getElementById('time-pause-btn');
+        if (pauseBtn) {
+            pauseBtn.textContent = this.gameTimePaused ? '继续' : '暂停';
         }
     }
 
@@ -1459,11 +1480,137 @@ class StockSimulator {
         console.log(`随机设置游戏时间为: ${this.gameTime.hour}:${this.gameTime.minute.toString().padStart(2, '0')}`);
     }
 
+    // 时间控制：暂停 / 继续
+    toggleTimePause() {
+        this.gameTimePaused = !this.gameTimePaused;
+        this.updateTimeDisplay();
+        this.showNotification(this.gameTimePaused ? '游戏时间已暂停' : '游戏时间已继续');
+    }
+
+    // 计算跳过的目标时间（返回当天分钟数 0-1439；null 表示无需跳过）
+    getSkipTargetMinutes() {
+        const cur = this.gameTime.hour * 60 + this.gameTime.minute;
+
+        // 处于交易时段（含夜猫）：跳至本轮交易结束前1分钟（游戏时间以分钟计，≈结束前10秒）
+        if (cur >= 570 && cur <= 690) {      // 上午盘 9:30 - 11:30
+            return cur < 689 ? 689 : null;   // → 11:29
+        }
+        if (cur >= 695 && cur <= 700) {      // 夜猫 11:35 - 11:40
+            return cur < 699 ? 699 : null;   // → 11:39
+        }
+        if (cur >= 780 && cur <= 900) {      // 下午盘 13:00 - 15:00
+            return cur < 899 ? 899 : null;   // → 14:59
+        }
+
+        // 非交易时间：跳至下一个交易时段开始前1分钟
+        if (cur < 570) return 569;           // → 9:29（上午开盘前）
+        if (cur < 695) return 694;           // → 11:34（夜猫开盘前）
+        if (cur < 780) return 779;           // → 12:59（下午开盘前）
+        return 569;                          // → 次日 9:29（上午开盘前）
+    }
+
+    // 时间控制：跳过（加速推进游戏时间，不忽略正常进程）
+    skipTime() {
+        if (this.skipMode) {
+            this.showNotification('正在跳过中，请稍候...');
+            return;
+        }
+        if (!this.currentSave) {
+            this.showNotification('请先进入游戏再使用跳过功能');
+            return;
+        }
+
+        const target = this.getSkipTargetMinutes();
+        if (target === null) {
+            this.showNotification('已接近本轮交易结束，无需跳过');
+            return;
+        }
+
+        const cur = this.gameTime.hour * 60 + this.gameTime.minute;
+        const advance = (target - cur + 1440) % 1440;
+        if (advance <= 0) {
+            this.showNotification('已到达目标时间');
+            return;
+        }
+
+        // 跳过期间停止常规市场定时器，避免重复推进
+        if (this.marketInterval) {
+            clearInterval(this.marketInterval);
+            this.marketInterval = null;
+        }
+
+        this.skipMode = true;
+        this.skipTicksRemaining = advance;
+        this.showNotification(`开始跳过时间（约 ${advance} 分钟）...`);
+
+        // 加速执行完整市场流程，直至到达目标时间
+        setTimeout(() => this.skipTick(), 0);
+    }
+
+    // 跳过的单步推进：每次调用执行完整 updateMarket，直至剩余tick数为0
+    skipTick() {
+        if (!this.skipMode) return;
+
+        if (this.skipTicksRemaining <= 0) {
+            this.finishSkip();
+            return;
+        }
+
+        // 剩余较多时批量推进以加快跳过（不影响正常流程，每个tick均完整执行市场更新）
+        const batch = this.skipTicksRemaining > 300 ? 10 : this.skipTicksRemaining > 60 ? 5 : 1;
+        const count = Math.min(batch, this.skipTicksRemaining);
+        for (let i = 0; i < count; i++) {
+            this.updateMarket();
+            this.skipTicksRemaining--;
+            if (this.skipTicksRemaining <= 0) break;
+        }
+
+        if (this.skipTicksRemaining <= 0) {
+            this.finishSkip();
+        } else {
+            setTimeout(() => this.skipTick(), 0);
+        }
+    }
+
+    // 结束跳过：恢复常规市场定时器并做最终刷新
+    finishSkip() {
+        this.skipMode = false;
+        this.skipTicksRemaining = 0;
+
+        // 恢复常规市场定时器（不额外推进一次）
+        if (this.marketInterval) {
+            clearInterval(this.marketInterval);
+        }
+        this.marketInterval = setInterval(() => this.updateMarket(), this.refreshRate);
+
+        // 完成后的最终界面刷新
+        this.updateTimeDisplay();
+        this.renderStockList(this.stockSearch.keyword);
+        if (this.selectedStock) {
+            this.updateStockDetail();
+        }
+        this.updatePortfolioRealTime();
+        this.updateTradeAvailable();
+        this.showNotification('时间跳过完成');
+    }
+
+    // 取消进行中的跳过（例如切换存档时调用）
+    cancelSkip() {
+        this.skipMode = false;
+        this.skipTicksRemaining = 0;
+    }
+
     // 更新市场数据
     updateMarket() {
         if (!this.marketTickCount) {
             this.marketTickCount = 0;
         }
+        
+        // 暂停时冻结整个市场（游戏时间与行情均不推进）；跳过期间除外
+        if (this.gameTimePaused && !this.skipMode) {
+            return;
+        }
+        
         this.marketTickCount++;
         
         // 更新游戏时间
@@ -1474,13 +1621,15 @@ class StockSimulator {
         
         // 非交易时间：完全不更新市场数据
         if (!isTradingTime) {
-            // 只更新UI显示，不更新任何价格或K线数据
-            this.renderStockList(this.stockSearch.keyword);
-            if (this.selectedStock) {
-                this.updateStockDetail();
+            // 只更新UI显示，不更新任何价格或K线数据（跳过期间暂缓重绘以加速）
+            if (!this.skipMode) {
+                this.renderStockList(this.stockSearch.keyword);
+                if (this.selectedStock) {
+                    this.updateStockDetail();
+                }
+                this.updatePortfolioRealTime();
+                this.updateTradeAvailable();
             }
-            this.updatePortfolioRealTime();
-            this.updateTradeAvailable();
             return;
         }
         
@@ -1595,13 +1744,15 @@ class StockSimulator {
             this.generateOrderBook(data);
         });
 
-        // 使用保存的搜索关键词重新渲染列表，保留搜索状态
-        this.renderStockList(this.stockSearch.keyword);
-        if (this.selectedStock) {
-            this.updateStockDetail();
+        // 使用保存的搜索关键词重新渲染列表，保留搜索状态（跳过期间暂缓重绘以加速）
+        if (!this.skipMode) {
+            this.renderStockList(this.stockSearch.keyword);
+            if (this.selectedStock) {
+                this.updateStockDetail();
+            }
+            this.updatePortfolioRealTime();
+            this.updateTradeAvailable();
         }
-        this.updatePortfolioRealTime();
-        this.updateTradeAvailable();
     }
 
     // 生成五档行情
