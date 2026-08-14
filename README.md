@@ -730,7 +730,7 @@ chartState = {
 **版本信息**：v2.3.0
 **开发人员**：莫客星图
 
-## Star 历史
+# Star 历史
 
 <a href="https://www.star-history.com/?repos=ljy969%2FStock-simulator&type=date&legend=top-left">
  <picture>
