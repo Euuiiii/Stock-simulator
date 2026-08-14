@@ -1010,9 +1010,9 @@ class StockSimulator {
                 configs: [],
                 stats: {
                     totalTrades: 0,
-                    profitTrades: 0,
-                    lossTrades: 0,
-                    totalProfit: 0
+                    successTrades: 0,
+                    failedTrades: 0,
+                    totalPnl: 0
                 },
                 records: []
             }
@@ -1070,9 +1070,9 @@ class StockSimulator {
                 configs: [],
                 stats: {
                     totalTrades: 0,
-                    profitTrades: 0,
-                    lossTrades: 0,
-                    totalProfit: 0
+                    successTrades: 0,
+                    failedTrades: 0,
+                    totalPnl: 0
                 },
                 records: []
             };
@@ -1486,6 +1486,11 @@ class StockSimulator {
         
         // 每20个周期切换一个交易日
         const isNewTradingDay = this.marketTickCount % 20 === 0;
+        
+        if (isNewTradingDay && this.currentSave) {
+            // 新交易日：清空上一交易日的T+1交易记录
+            this.currentSave.dayTrades = {};
+        }
         
         this.stockData.forEach((data, code) => {
             if (isNewTradingDay) {
@@ -2691,14 +2696,21 @@ class StockSimulator {
             return { valid: false, message: '价格必须大于0' };
         }
 
-        // 验证价格与市场价格的差异
+        // 验证价格与市场价格的合理性
         let stockData = this.stockData.get(code);
         if (stockData) {
-            // 使用涨跌停管理器验证价格
+            const marketPrice = stockData.price;
             const limitUpPrice = this.limitManager.calculateLimitUpPrice(stockData.prevClose);
             const limitDownPrice = this.limitManager.calculateLimitDownPrice(stockData.prevClose);
+            const MAX_PRICE_DEVIATION = 0.20; // 委托价与市价最大偏离度 20%（硬阻断）
+            const WARN_PRICE_DEVIATION = 0.10; // 委托价与市价偏离度 10%（警示确认）
             
-            // 检查是否超过涨停或跌停价格
+            // 检查熔断状态
+            if (this.limitManager.isCircuitBreakerActive(code)) {
+                return { valid: false, message: '该股票处于熔断状态，暂时无法交易' };
+            }
+            
+            // 涨跌停价格校验（基于昨收价）
             if (type === 'buy' && price > limitUpPrice) {
                 return { valid: false, message: `买入价格不能超过涨停价 ${limitUpPrice.toFixed(2)}` };
             }
@@ -2706,14 +2718,17 @@ class StockSimulator {
                 return { valid: false, message: `卖出价格不能低于跌停价 ${limitDownPrice.toFixed(2)}` };
             }
             
-            // 检查熔断状态
-            if (this.limitManager.isCircuitBreakerActive(code)) {
-                return { valid: false, message: '该股票处于熔断状态，暂时无法交易' };
-            }
+            // 委托价与当前市价偏离度校验
+            const deviation = Math.abs(price - marketPrice) / marketPrice;
+            const lowerBound = marketPrice * (1 - MAX_PRICE_DEVIATION);
+            const upperBound = marketPrice * (1 + MAX_PRICE_DEVIATION);
             
-            const priceDiff = Math.abs(price - stockData.price) / stockData.price;
-            if (priceDiff > 0.1) { // 价格差异超过10%
-                if (!confirm(`您输入的价格与当前市场价格(${stockData.price.toFixed(2)})相差较大，确定要继续交易吗？`)) {
+            if (deviation > MAX_PRICE_DEVIATION) {
+                // 偏离超过20%：硬阻断
+                return { valid: false, message: `委托价与当前市价(${marketPrice.toFixed(2)})偏离超过${MAX_PRICE_DEVIATION * 100}%，请输入合理价格（允许范围：${lowerBound.toFixed(2)} ~ ${upperBound.toFixed(2)}）` };
+            } else if (deviation > WARN_PRICE_DEVIATION) {
+                // 偏离10%-20%：警示确认
+                if (!confirm(`您输入的价格与当前市场价格(${marketPrice.toFixed(2)})偏离 ${(deviation * 100).toFixed(1)}%，确定要继续交易吗？`)) {
                     return { valid: false, message: '交易已取消' };
                 }
             }
@@ -4552,9 +4567,9 @@ class StockSimulator {
                 configs: [],
                 stats: {
                     totalTrades: 0,
-                    profitTrades: 0,
-                    lossTrades: 0,
-                    totalProfit: 0
+                    successTrades: 0,
+                    failedTrades: 0,
+                    totalPnl: 0
                 },
                 records: []
             };
@@ -4566,9 +4581,9 @@ class StockSimulator {
         this.autoTrade.configs = this.currentSave.autoTrade.configs || [];
         this.autoTrade.stats = this.currentSave.autoTrade.stats || {
             totalTrades: 0,
-            profitTrades: 0,
-            lossTrades: 0,
-            totalProfit: 0
+            successTrades: 0,
+            failedTrades: 0,
+            totalPnl: 0
         };
         this.autoTrade.records = this.currentSave.autoTrade.records || [];
         this.autoTrade.stockTradeCounts = {};
@@ -4598,9 +4613,9 @@ class StockSimulator {
         this.autoTrade.configs = [];
         this.autoTrade.stats = {
             totalTrades: 0,
-            profitTrades: 0,
-            lossTrades: 0,
-            totalProfit: 0
+            successTrades: 0,
+            failedTrades: 0,
+            totalPnl: 0
         };
         this.autoTrade.records = [];
         this.autoTrade.stockTradeCounts = {};
@@ -4614,9 +4629,9 @@ class StockSimulator {
             configs: [],
             stats: {
                 totalTrades: 0,
-                profitTrades: 0,
-                lossTrades: 0,
-                totalProfit: 0
+                successTrades: 0,
+                failedTrades: 0,
+                totalPnl: 0
             },
             records: []
         };
@@ -4924,10 +4939,41 @@ class StockSimulator {
             return;
         }
 
-        // 检查数量有效性
+        // 数量有效性
         if (config.quantity <= 0) {
             console.log(`交易失败: 数量无效 ${config.quantity}`);
             this.addAutoTradeRecord(false, 0, '数量无效', 0, config);
+            return;
+        }
+
+        // 熔断状态检查
+        if (this.limitManager.isCircuitBreakerActive(config.code)) {
+            console.log(`交易失败: ${config.name} 处于熔断状态`);
+            this.addAutoTradeRecord(false, 0, '该股票处于熔断状态', 0, config);
+            return;
+        }
+
+        // 涨跌停价格校验
+        const limitUpPrice = this.limitManager.calculateLimitUpPrice(data.prevClose);
+        const limitDownPrice = this.limitManager.calculateLimitDownPrice(data.prevClose);
+        if (config.direction === 'buy' && price > limitUpPrice) {
+            console.log(`交易失败: 买入价 ${price} 超过涨停价 ${limitUpPrice.toFixed(2)}`);
+            this.addAutoTradeRecord(false, 0, `买入价超过涨停价 ${limitUpPrice.toFixed(2)}`, 0, config);
+            return;
+        }
+        if (config.direction === 'sell' && price < limitDownPrice) {
+            console.log(`交易失败: 卖出价 ${price} 低于跌停价 ${limitDownPrice.toFixed(2)}`);
+            this.addAutoTradeRecord(false, 0, `卖出价低于跌停价 ${limitDownPrice.toFixed(2)}`, 0, config);
+            return;
+        }
+
+        // 委托价与市价偏离度校验
+        const MAX_PRICE_DEVIATION = 0.20;
+        const lowerBound = data.price * (1 - MAX_PRICE_DEVIATION);
+        const upperBound = data.price * (1 + MAX_PRICE_DEVIATION);
+        if (price < lowerBound || price > upperBound) {
+            console.log(`交易失败: 委托价 ${price} 与市价 ${data.price.toFixed(2)} 偏离超过${MAX_PRICE_DEVIATION * 100}%`);
+            this.addAutoTradeRecord(false, 0, `委托价与市价偏离超过${MAX_PRICE_DEVIATION * 100}%`, 0, config);
             return;
         }
 
@@ -4938,9 +4984,11 @@ class StockSimulator {
         }
 
         // 检查全局交易次数限制
-        if (this.autoTrade.totalTrades && this.autoTrade.totalTrades >= (this.autoTrade.maxTotalTrades || 100)) {
-            console.log(`交易失败: 超过全局最大交易次数限制 ${this.autoTrade.maxTotalTrades}`);
-            this.addAutoTradeRecord(false, 0, '超过全局最大交易次数限制', 0, config);
+        const totalTrades = this.autoTrade.stats.totalTrades || 0;
+        const maxTotal = this.autoTrade.maxTotalTrades || 100;
+        if (totalTrades >= maxTotal) {
+            console.log(`交易失败: 超过全局最大交易次数限制 ${maxTotal}`);
+            this.addAutoTradeRecord(false, 0, `超过全局最大交易次数限制 ${maxTotal}`, 0, config);
             return;
         }
 
