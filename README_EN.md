@@ -12,7 +12,12 @@ A pure-entertainment, zero-stress Chinese A-share stock trading simulator platfo
 > Developer: Moke Xintu (Bilibili)
 
 ---
-
+<div align="center">
+  <a href="https://www.bilibili.com/video/BV1sWNwzVEek/" target="_blank">
+    <img src="./images/cover.jpg" width="600" alt="全新股票模拟器演示视频">
+  </a>
+  <p>🎬 <b><a href="https://www.bilibili.com/video/BV1sWNwzVEek/" target="_blank">Click here to watch the full demonstration video on Bilibili.</a></b></p>
+</div>
 
 ---
 
