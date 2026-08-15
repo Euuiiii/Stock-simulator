@@ -1,3 +1,9 @@
+<p align="right">
+  <a href="README.md">
+    <img src="https://img.shields.io/badge/语言-中文-red?style=for-the-badge" alt="Chinese README" />
+  </a>
+</p>
+
 # Stock Simulator
 
 A pure-entertainment, zero-stress Chinese A-share stock trading simulator platform. All data is generated and stored locally inside your browser without connecting to real market APIs. Users can learn trading rules, experience market fluctuations, and test strategies in a risk-free environment.
