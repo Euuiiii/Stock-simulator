@@ -1,9 +1,3 @@
-<p align="right">
-  <a href="README.md">
-    <img src="https://img.shields.io/badge/语言-中文-red?style=for-the-badge" alt="Chinese README" />
-  </a>
-</p>
-
 # Stock Simulator
 
 A pure-entertainment, zero-stress Chinese A-share stock trading simulator platform. All data is generated and stored locally inside your browser without connecting to real market APIs. Users can learn trading rules, experience market fluctuations, and test strategies in a risk-free environment.
@@ -12,41 +6,36 @@ A pure-entertainment, zero-stress Chinese A-share stock trading simulator platfo
 > Developer: Moke Xintu (Bilibili)
 
 ---
-<div align="center">
-  <a href="https://www.bilibili.com/video/BV1sWNwzVEek/" target="_blank">
-    <img src="./images/cover.jpg" width="600" alt="Stock Simulator Demo Video">
-  </a>
-  <p>🎬 <b><a href="https://www.bilibili.com/video/BV1sWNwzVEek/" target="_blank">Click here to watch the full demo video on Bilibili</a></b></p>
-</div>
+
 
 ---
 
 ## Table of Contents
 
-- [Project Overview](#project-overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Quick Start](#quick-start)
-- [Core Features Detailed](#core-features-detailed)
-  - [User System](#user-system)
-  - [Save System](#save-system)
-  - [Market Simulation System](#market-simulation-system)
-  - [Trading System](#trading-system)
-  - [Automated Trading System](#automated-trading-system)
-  - [Achievement System](#achievement-system)
-  - [Time Control System](#time-control-system)
-  - [K-Line Charting System](#k-line-charting-system)
-  - [Debug Panel](#debug-panel)
-  - [Themes & UI](#themes--ui)
-  - [Beginner Tutorial](#beginner-tutorial)
-  - [Data Security & Backup](#data-security--backup)
-- [Trading Rules](#trading-rules)
-- [UI Navigation Guide](#ui-navigation-guide)
-- [Frequently Asked Questions](#frequently-asked-questions)
-- [Developer Information](#developer-information)
-- [Future Roadmap](#future-roadmap)
-- [Star History](#star-history)
+-   [Project Overview](#project-overview)
+-   [Features](#features)
+-   [Tech Stack](#tech-stack)
+-   [Project Structure](#project-structure)
+-   [Quick Start](#quick-start)
+-   [Core Features Detailed](#core-features-detailed)
+    -   [User System](#user-system)
+    -   [Save System](#save-system)
+    -   [Market Simulation System](#market-simulation-system)
+    -   [Trading System](#trading-system)
+    -   [Automated Trading System](#automated-trading-system)
+    -   [Achievement System](#achievement-system)
+    -   [Time Control System](#time-control-system)
+    -   [K-Line Charting System](#k-line-charting-system)
+    -   [Debug Panel](#debug-panel)
+    -   [Themes & UI](#themes--ui)
+    -   [Beginner Tutorial](#beginner-tutorial)
+    -   [Data Security & Backup](#data-security--backup)
+-   [Trading Rules](#trading-rules)
+-   [UI Navigation Guide](#ui-navigation-guide)
+-   [Frequently Asked Questions](#frequently-asked-questions)
+-   [Developer Information](#developer-information)
+-   [Future Roadmap](#future-roadmap)
+-   [Star History](#star-history)
 
 ---
 
@@ -56,10 +45,10 @@ Stock Simulator is a zero-dependency web application built purely with frontend 
 
 Positioned as a "pure entertainment" tool, it involves no real capital. All market data is generated locally by algorithms in real-time, designed to help users:
 
-- Learn the basic process and rules of stock trading
-- Understand mechanisms like daily price limits, T+1, and commission fees
-- Test trading strategies (especially via the automated trading feature)
-- Experience the psychological dynamics of market fluctuations with zero stress
+-   Learn the basic process and rules of stock trading
+-   Understand mechanisms like daily price limits, T+1, and commission fees
+-   Test trading strategies (especially via the automated trading feature)
+-   Experience the psychological dynamics of market fluctuations with zero stress
 
 ---
 
@@ -67,44 +56,45 @@ Positioned as a "pure entertainment" tool, it involves no real capital. All mark
 
 ### Core Features
 
-- **Full User System**: Supports registration, login, password changes, account deletion, and auto-login
-- **Multi-Save Management**: Each user can manage multiple independent saves (create, load, rename, delete, switch)
-- **300+ A-Share Stock Pool**: Covers 80+ sectors including Banking, Brokerages, Spirits, Pharma, Semiconductors, Clean Energy, Defense, etc.
-- **Realistic Market Simulation**: Random price fluctuations, volume linkages, 5-level Order Book, and K-line chart data
-- **Complete Trading Cycle**: Buy, sell, position management, order history, and real-time floating P&L calculation
-- **T+0 / T+1 Dual Modes**: Choose whether to enable intraday turnaround trading at game startup
-- **Configurable Fees**: Customizable buy/sell commissions (including stamp duty)
+-   **Full User System**: Supports registration, login, password changes, account deletion, and auto-login
+-   **Multi-Save Management**: Each user can manage multiple independent saves (create, load, rename, delete, switch)
+-   **300+ A-Share Stock Pool**: Covers 80+ sectors including Banking, Brokerages, Spirits, Pharma, Semiconductors, Clean Energy, Defense, etc.
+-   **Realistic Market Simulation**: Random price fluctuations, volume linkages, 5-level Order Book, and K-line chart data
+-   **Complete Trading Cycle**: Buy, sell, position management, order history, and real-time floating P&L calculation
+-   **T+0 / T+1 Dual Modes**: Choose whether to enable intraday turnaround trading at game startup
+-   **Configurable Fees**: Customizable buy/sell commissions (including stamp duty)
 
 ### Advanced Features
 
-- **Automated Trading System**: Multi-stock, multi-condition automated strategies, including price thresholds, percentage changes, target profits, interval triggers, and stop-loss / take-profit risk controls
-- **Achievement System**: 50+ achievements across Bronze, Silver, Gold, and Legendary tiers, plus easter eggs
-- **K-Line Charts**: Custom Canvas-rendered candlestick charts with wheel zoom, drag pan, box zoom, touch support, and volume histograms
-- **Time Control System**: Simulates trading hours with support for manual adjustments, presets, and random jumps
-- **Debug Panel**: Hidden developer dashboard to modify capital, unlock achievements, control time, and reset market state
-- **Multi-Theme Support**: Dark (default), Light, and Festival themes
-- **Beginner Tutorial**: Guided 9-step walkthrough automatically triggered for new users
-- **Save File Import/Export**: Export encrypted user data files for cross-device migration
-- **Responsive Design**: Compatible with desktop and mobile screens
+-   **Automated Trading System**: Multi-stock, multi-condition automated strategies, including price thresholds, percentage changes, target profits, interval triggers, and stop-loss / take-profit risk controls
+-   **Achievement System**: 50+ achievements across Bronze, Silver, Gold, and Legendary tiers, plus easter eggs
+-   **K-Line Charts**: Custom Canvas-rendered candlestick charts with wheel zoom, drag pan, box zoom, touch support, and volume histograms
+-   **Time Control System**: Simulates trading hours with support for manual adjustments, presets, and random jumps
+-   **Debug Panel**: Hidden developer dashboard to modify capital, unlock achievements, control time, and reset market state
+-   **Multi-Theme Support**: Dark (default), Light, and Festival themes
+-   **Beginner Tutorial**: Guided 9-step walkthrough automatically triggered for new users
+-   **Save File Import/Export**: Export encrypted user data files for cross-device migration
+-   **Responsive Design**: Compatible with desktop and mobile screens
 
 ---
 
 ## Tech Stack
 
-| Category | Technology |
-| --- | --- |
-| Markup | HTML5 |
-| Styling | CSS3 (CSS Variables, Flexbox, Grid, Responsive Layout) |
-| Core Logic | Vanilla JavaScript (ES6+, Classes, Maps, Sets, Promises) |
-| Charts | Canvas 2D API (Custom implementation for Candlestick and Volume rendering) |
-| Data Storage | LocalStorage |
-| Encryption | Custom XOR + Base64 encryption & custom hashing |
-| Dependencies | None (Zero Third-Party Libraries) |
+| Category       | Technology                                                 |
+| :------------- | :--------------------------------------------------------- |
+| Markup         | HTML5                                                      |
+| Styling        | CSS3 (CSS Variables, Flexbox, Grid, Responsive Layout)     |
+| Core Logic     | Vanilla JavaScript (ES6+, Classes, Maps, Sets, Promises)   |
+| Charts         | Canvas 2D API (Custom implementation for Candlestick/Volume)|
+| Data Storage   | LocalStorage                                               |
+| Encryption     | Custom XOR + Base64 encryption & custom hashing            |
+| Dependencies   | None (Zero Third-Party Libraries)                          |
 
 ---
 
 ## Project Structure
 
+```text
 Stock simulator/
 ├── index.html        # Main HTML structure (715 lines)
 ├── game.js           # Core game logic (5300+ lines)
@@ -115,7 +105,7 @@ Stock simulator/
 ├── crypto.js         # Encryption utilities (XOR + Base64 + Hash + UUID, 65 lines)
 ├── styles.css        # Full application styles & themes (3252 lines)
 └── README.html       # HTML version of the user guide
-
+```
 
 ### Script Loading Order
 
@@ -132,21 +122,21 @@ In `index.html`, scripts must be loaded in the following exact order due to glob
 
 ### System Requirements
 
-- Any modern web browser (Chrome, Firefox, Edge, Safari, etc.)
-- Support for LocalStorage and Canvas API
-- No runtime environment or package installation required
+-   Any modern web browser (Chrome, Firefox, Edge, Safari, etc.)
+-   Support for LocalStorage and Canvas API
+-   No runtime environment or package installation required
 
 ### Installation & Execution
 
-1. Download or clone this repository to your local device.
-2. Double-click `index.html` or open it in your web browser.
-3. On the login screen, click Register, fill in a username (2-20 characters) and password (6-20 characters).
-4. Log in using your registered credentials.
-5. In the Save Select screen, click `+ New Game`.
-6. Set your initial cash, trading fees, and rules, then click Start Game.
-7. Start trading from the main dashboard.
+1.  Download or clone this repository to your local device.
+2.  Double-click `index.html` or open it in your web browser.
+3.  On the login screen, click **Register**, fill in a username (2-20 characters) and password (6-20 characters).
+4.  Log in using your registered credentials.
+5.  In the Save Select screen, click `+ New Game`.
+6.  Set your initial cash, trading fees, and rules, then click **Start Game**.
+7.  Start trading from the main dashboard.
 
-> Tip: The beginner tutorial will trigger automatically on your first run. You can skip it at any time.
+> **Tip:** The beginner tutorial will trigger automatically on your first run. You can skip it at any time.
 
 ## Core Features Detailed
 
@@ -171,12 +161,12 @@ User information is stored in browser LocalStorage under the key `stock_simulato
 
 #### Feature List
 
-- Register: Validates 2-20 char username and 6-20 char password with confirmation; enforces unique usernames.
-- Login: Hash-matched password verification; supports quick enter-key submit.
-- Auto-Login: Remembers the last active user session.
-- Change Password: Requires verification of the current password and confirmation of the new password.
-- Delete Account: Requires typing `DELETE` for irreversible account removal.
-- Data Migration: Automatically fills missing data properties (`tutorialCompleted`, `theme`, `refreshRate`) for legacy data formats upon load.
+-   **Register**: Validates 2-20 char username and 6-20 char password with confirmation; enforces unique usernames.
+-   **Login**: Hash-matched password verification; supports quick enter-key submit.
+-   **Auto-Login**: Remembers the last active user session.
+-   **Change Password**: Requires verification of the current password and confirmation of the new password.
+-   **Delete Account**: Requires typing `DELETE` for irreversible account removal.
+-   **Data Migration**: Automatically fills missing data properties (`tutorialCompleted`, `theme`, `refreshRate`) for legacy data formats upon load.
 
 ### Save System
 
@@ -249,9 +239,9 @@ Market updates are driven periodically by `updateMarket()` in `game.js` based on
 
 #### Price Fluctuation Algorithm
 
-- Standard Stocks: Each tick generates a random fluctuation of (-2% to +2%), calculated as `(Math.random() - 0.5) * 0.04`.
-- Easter-Egg Stock "影视飓风" (Code 999999): 70% chance to rise (+0.5% to +3%), 30% chance to drop (-0.5% to -2%), outperforming average stocks.
-- Price boundaries are clamped to daily limit prices via `LimitManager.clampPrice()` and rounded to two decimal places (0.01 CNY).
+-   **Standard Stocks**: Each tick generates a random fluctuation of (-2% to +2%), calculated as `(Math.random() - 0.5) * 0.04`.
+-   **Easter-Egg Stock "影视飓风" (Code 999999)**: 70% chance to rise (+0.5% to +3%), 30% chance to drop (-0.5% to -2%), outperforming average stocks.
+-   Price boundaries are clamped to daily limit prices via `LimitManager.clampPrice()` and rounded to two decimal places (0.01 CNY).
 
 #### Volume Algorithm
 
@@ -267,31 +257,31 @@ Includes complete order submission, parameter validation, financial execution, t
 
 #### Execution Flow
 
-1. User inputs stock code, order price, and order quantity on the Trade page.
-2. `validateTradeParameters()` verifies constraints.
-3. `executeTrade()` handles fund deduct/credit and portfolio updates.
-4. `recordTrade()` logs the order details.
-5. `updateAfterTrade()` refreshes UI views.
+1.  User inputs stock code, order price, and order quantity on the Trade page.
+2.  `validateTradeParameters()` verifies constraints.
+3.  `executeTrade()` handles fund deduct/credit and portfolio updates.
+4.  `recordTrade()` logs the order details.
+5.  `updateAfterTrade()` refreshes UI views.
 
 #### Validation Rules
 
-- Must be executed during market trading hours (9:30-11:30, 13:00-15:00).
-- Price must be greater than 0.
-- Buy price cannot exceed upper price limit (+10%); Sell price cannot fall below lower limit (-10%).
-- Stock must not be halted due to circuit breakers.
-- Double confirmation modal is triggered if the order price deviates over 10% from the current market price.
-- Stock code must exist in the stock pool.
+-   Must be executed during market trading hours (9:30-11:30, 13:00-15:00).
+-   Price must be greater than 0.
+-   Buy price cannot exceed upper price limit (+10%); Sell price cannot fall below lower limit (-10%).
+-   Stock must not be halted due to circuit breakers.
+-   Double confirmation modal is triggered if the order price deviates over 10% from the current market price.
+-   Stock code must exist in the stock pool.
 
 #### T+1 Rule (Default)
 
-- Stocks bought today cannot be sold today.
-- Stocks sold today cannot be bought back today (when `t0Mode = false`).
-- Tracks daily stock transaction frequencies using `dayTrades`.
+-   Stocks bought today cannot be sold today.
+-   Stocks sold today cannot be bought back today (when `t0Mode = false`).
+-   Tracks daily stock transaction frequencies using `dayTrades`.
 
 #### Fee Calculation
 
-- Buy Fee = Order Amount × Buy Fee Rate (Default 0.03%)
-- Sell Fee = Order Amount × Sell Fee Rate (Default 0.13%, includes stamp duty)
+-   Buy Fee = Order Amount × Buy Fee Rate (Default 0.03%)
+-   Sell Fee = Order Amount × Sell Fee Rate (Default 0.13%, includes stamp duty)
 
 Trade Unit: Configure minimum trade increments to 1 share or 100 shares (1 lot). Quantities automatically round to the configured unit.
 
@@ -301,25 +291,25 @@ Allows users to build automated trading logic for multiple stocks.
 
 #### Parameters
 
-| Parameter | Description |
-| --- | --- |
-| Stock Code | Code present in the stock pool |
-| Direction | Buy / Sell |
-| Trigger Type | Price Threshold / % Change / Profit Target / Time Interval |
-| Trigger Condition | Greater than / Less than / Equal to value |
-| Order Quantity | Quick presets: 1/4, 1/2, or All-In |
-| Execution Price | Market Price or Limit Price |
-| Stop Loss Amount | Automatically sells when losses reach threshold |
-| Take Profit Amount | Automatically sells when profits reach threshold |
-| Max Executions | Execution cap for the rule |
-| Max Trade Amount | Single order financial spending cap |
+| Parameter        | Description                                                          |
+| :--------------- | :------------------------------------------------------------------- |
+| Stock Code       | Code present in the stock pool                                       |
+| Direction        | Buy / Sell                                                           |
+| Trigger Type     | Price Threshold / % Change / Profit Target / Time Interval           |
+| Trigger Condition| Greater than / Less than / Equal to value                            |
+| Order Quantity   | Quick presets: 1/4, 1/2, or All-In                                   |
+| Execution Price  | Market Price or Limit Price                                          |
+| Stop Loss Amount | Automatically sells when losses reach threshold                      |
+| Take Profit Amount| Automatically sells when profits reach threshold                    |
+| Max Executions   | Execution cap for the rule                                           |
+| Max Trade Amount | Single order financial spending cap                                  |
 
 #### Triggers
 
-- Price Threshold: Triggers when price meets threshold.
-- % Change: Triggers when daily percentage movement reaches threshold.
-- Profit Target: (Sell only) Triggers when position P&L reaches specified amount.
-- Time Interval: Auto-triggers every 30 seconds.
+-   **Price Threshold**: Triggers when price meets threshold.
+-   **% Change**: Triggers when daily percentage movement reaches threshold.
+-   **Profit Target**: (Sell only) Triggers when position P&L reaches specified amount.
+-   **Time Interval**: Auto-triggers every 30 seconds.
 
 Cooldown & Controls: Default 5-second cooldown per rule (30s for Interval mode) to prevent rapid multi-triggers. Automatically checks Stop Loss / Take Profit targets.
 
@@ -329,12 +319,12 @@ Defined in `achievements.js`, containing 50+ unlockable achievements across 4 ra
 
 #### Tiers
 
-| Tier | Color | Description |
-| --- | --- | --- |
-| Bronze | `#cd7f32` | Introductory achievements for basic actions |
-| Silver | `#c0c0c0` | Intermediate achievements requiring strategy |
-| Gold | `#ffd700` | Advanced achievements for substantial capital growth |
-| Legend | Red-Gold Gradient | Top tier achievements for extreme milestones |
+| Tier   | Color           | Description                                      |
+| :----- | :-------------- | :----------------------------------------------- |
+| Bronze | `#cd7f32`       | Introductory achievements for basic actions      |
+| Silver | `#c0c0c0`       | Intermediate achievements requiring strategy     |
+| Gold   | `#ffd700`       | Advanced achievements for substantial capital growth |
+| Legend | Red-Gold Gradient| Top tier achievements for extreme milestones     |
 
 Features: Evaluated after every trade execution using stats compiled via `calculateSaveStats()`. Generates downloadable 600×800 Canvas share cards for unlocked achievements.
 
@@ -342,9 +332,9 @@ Features: Evaluated after every trade execution using stats compiled via `calcul
 
 Simulates market operating hours.
 
-- Morning Session: 9:30 – 11:30
-- Afternoon Session: 13:00 – 15:00
-- Non-Trading Hours: Market data updates pause; order submission is blocked.
+-   Morning Session: 9:30 – 11:30
+-   Afternoon Session: 13:00 – 15:00
+-   Non-Trading Hours: Market data updates pause; order submission is blocked.
 
 Each tick advances time by 2 simulated minutes. Debug settings allow custom manual time inputs or preset quick-jumps (e.g., Morning Open, Night Owl, Market Close).
 
@@ -354,26 +344,26 @@ Pure Canvas 2D engine built without external charting libraries.
 
 #### Interactions
 
-- Mouse wheel to zoom along the X-axis
-- Drag and drop to pan horizontally
-- Shift + Drag (or Right-click drag) to box-select and zoom into a section
-- Touch gestures (single finger pan, pinch-to-zoom on mobile devices)
-- Toolbar controls: Zoom In, Zoom Out, Reset view
+-   Mouse wheel to zoom along the X-axis
+-   Drag and drop to pan horizontally
+-   Shift + Drag (or Right-click drag) to box-select and zoom into a section
+-   Touch gestures (single finger pan, pinch-to-zoom on mobile devices)
+-   Toolbar controls: Zoom In, Zoom Out, Reset view
 
 ### Debug Panel
 
 Hidden panel for testing and quick adjustments.
 
-- Activation: Click your username on the Profile (My) page 5 times consecutively.
-- Features: Instantly adjust available funds, unlock/lock achievements, adjust game clock, and reset market state.
+-   **Activation**: Click your username on the Profile (My) page 5 times consecutively.
+-   **Features**: Instantly adjust available funds, unlock/lock achievements, adjust game clock, and reset market state.
 
 ### Themes & UI
 
 Supported themes via CSS Variables:
 
-- Dark (Default): `#0d1117` background, GitHub-inspired palette
-- Light: Day-mode layout (`#f5f5f5`)
-- Festival: Purple & Gold layout (`#1a0a2e`)
+-   **Dark (Default)**: `#0d1117` background, GitHub-inspired palette
+-   **Light**: Day-mode layout (`#f5f5f5`)
+-   **Festival**: Purple & Gold layout (`#1a0a2e`)
 
 Supports market color conventions: Red = Up, Green = Down.
 
@@ -383,38 +373,38 @@ A 9-step interactive guided overlay explaining market features, order execution,
 
 ### Data Security & Backup
 
-- Local Storage: Data encrypted using custom XOR + Base64 encoding. Passwords stored using 8-character hexadecimal hashes.
-- Export/Import: Export game data into an encrypted `.txt` file (`stock_simulator_backup_{username}_{timestamp}.txt`) for backup or cross-device transfer.
+-   **Local Storage**: Data encrypted using custom XOR + Base64 encoding. Passwords stored using 8-character hexadecimal hashes.
+-   **Export/Import**: Export game data into an encrypted `.txt` file (`stock_simulator_backup_{username}_{timestamp}.txt`) for backup or cross-device transfer.
 
 ## Trading Rules
 
 ### Trading Hours
 
-| Session | Hours |
-| --- | --- |
-| Morning | 9:30 - 11:30 |
-| Midday Break | 11:30 - 13:00 |
-| Afternoon | 13:00 - 15:00 |
-| Non-Trading Hours | Trading disabled; market simulation paused |
+| Session          | Hours         |
+| :--------------- | :------------ |
+| Morning          | 9:30 - 11:30  |
+| Midday Break     | 11:30 - 13:00 |
+| Afternoon        | 13:00 - 15:00 |
+| Non-Trading Hours| Trading disabled; market simulation paused |
 
 ### Daily Price Limits
 
-- Upper Limit (Limit Up): +10%
-- Lower Limit (Limit Down): -10%
-- Price limits are calculated off the previous day's close rounded to 0.01 CNY.
-- Orders priced above the upper limit or below the lower limit are rejected.
+-   Upper Limit (Limit Up): +10%
+-   Lower Limit (Limit Down): -10%
+-   Price limits are calculated off the previous day's close rounded to 0.01 CNY.
+-   Orders priced above the upper limit or below the lower limit are rejected.
 
 ### Circuit Breaker
 
-- Triggered when single-day percentage change reaches ±20%.
-- Pauses stock trading for 3 simulation tick cycles.
-- Resets on daily market rollover.
+-   Triggered when single-day percentage change reaches ±20%.
+-   Pauses stock trading for 3 simulation tick cycles.
+-   Resets on daily market rollover.
 
 ### T+1 Settlement
 
-- Stocks purchased today cannot be sold until the next trading day.
-- Stocks sold today cannot be repurchased on the same day.
-- Can be disabled in game setup by toggling T+0 Mode.
+-   Stocks purchased today cannot be sold until the next trading day.
+-   Stocks sold today cannot be repurchased on the same day.
+-   Can be disabled in game setup by toggling T+0 Mode.
 
 ## UI Navigation Guide
 
@@ -430,20 +420,20 @@ Login / Register Screen -> Save Select Screen -> Game Setup Screen -> Main Game 
 
 ### Login / Register Screen (auth-screen)
 
-- Login form: username, password, supports Enter to submit
-- Registration form: username, password, confirm password, supports Enter to move between input fields
-- Error prompts: real-time login/register errors are displayed
+-   Login form: username, password, supports Enter to submit
+-   Registration form: username, password, confirm password, supports Enter to move between input fields
+-   Error prompts: real-time login/register errors are displayed
 
 ### Save Select Screen (save-select-screen)
 
-- Save list: displays existing saves with name, creation time, and fund summary
-- Actions: load, rename, delete, create new game, log out
+-   Save list: displays existing saves with name, creation time, and fund summary
+-   Actions: load, rename, delete, create new game, log out
 
 ### Game Setup Screen (game-setup-screen)
 
-- Initial funds: randomly generated (500k-2M) or custom (minimum 100k)
-- Trading fees: buy fee, sell fee (including stamp duty)
-- Trading rules: T+0 toggle, minimum trade unit
+-   Initial funds: randomly generated (500k-2M) or custom (minimum 100k)
+-   Trading fees: buy fee, sell fee (including stamp duty)
+-   Trading rules: T+0 toggle, minimum trade unit
 
 ### Main Game Screen (main-screen)
 
@@ -451,92 +441,82 @@ The top navigation bar contains five main pages:
 
 #### Market Page (market-page)
 
-- Left side: search box, watchlist switch, sortable stock list (by name/price/change)
-- Right side: stock details, including name/code, current price, change amount, limit-up/down prices, market time, and status
-- K-line area: includes toolbar (zoom in, zoom out, reset), main chart, and volume sub-chart
-- Five-level order book: five bid and ask levels each
-- Shortcut actions: buy, sell, add to watchlist
+-   Left side: search box, watchlist switch, sortable stock list (by name/price/change)
+-   Right side: stock details, including name/code, current price, change amount, limit-up/down prices, market time, and status
+-   K-line area: includes toolbar (zoom in, zoom out, reset), main chart, and volume sub-chart
+-   Five-level order book: five bid and ask levels each
+-   Shortcut actions: buy, sell, add to watchlist
 
 #### Trade Page (trade-page)
 
-- Left side: buy/sell form (code, price, quantity, quick ratio buttons, available funds/estimated amount)
-- Right side: current positions list, including market time and status
+-   Left side: buy/sell form (code, price, quantity, quick ratio buttons, available funds/estimated amount)
+-   Right side: current positions list, including market time and status
 
 #### Auto-Trade Page (auto-trade-page)
 
-- Three tabs: trigger conditions, risk control, trading records
-- Trigger conditions: stock list + add stock form
-- Risk control: stop loss, take profit, max trade count, max trade amount
-- Trading records: auto-trading history and statistics
-- Top status indicator: not started / running / paused
+-   Three tabs: trigger conditions, risk control, trading records
+-   Trigger conditions: stock list + add stock form
+-   Risk control: stop loss, take profit, max trade count, max trade amount
+-   Trading records: auto-trading history and statistics
+-   Top status indicator: not started / running / paused
 
 #### Portfolio Page (portfolio-page)
 
-- Asset overview: total assets, market value, available cash, floating P&L, total return rate
-- Position table: stock, holdings, cost price, current price, market value, P&L, profit rate
-- Transaction record table: time, stock, direction, price, quantity, amount
+-   Asset overview: total assets, market value, available cash, floating P&L, total return rate
+-   Position table: stock, holdings, cost price, current price, market value, P&L, profit rate
+-   Transaction record table: time, stock, direction, price, quantity, amount
 
 #### Profile Page (profile-page)
 
-- User info: avatar, username, registration time
-- Statistics: session count, transaction count, achievement count
-- Achievement wall: unlocked achievements grouped by rarity, can expand all
-- Action buttons: export/import save, new game, switch save, change password, log out, delete account
+-   User info: avatar, username, registration time
+-   Statistics: session count, transaction count, achievement count
+-   Achievement wall: unlocked achievements grouped by rarity, can expand all
+-   Action buttons: export/import save, new game, switch save, change password, log out, delete account
 
 ### Modal Windows and Panels
 
-- Settings panel: theme switching, market refresh rate
-- Password change panel: current password, new password, confirmation
-- Debug panel: fund editing, achievement unlock, time control, market control
-- Achievement popup: new achievement unlock notification
-- Beginner tutorial: 9-step overlay guide
-- Rename save modal
+-   Settings panel: theme switching, market refresh rate
+-   Password change panel: current password, new password, confirmation
+-   Debug panel: fund editing, achievement unlock, time control, market control
+-   Achievement popup: new achievement unlock notification
+-   Beginner tutorial: 9-step overlay guide
+-   Rename save modal
 
 ---
 
 ## Frequently Asked Questions
 
 ### How do I register a new account?
-
 Click the Register tab on the login screen, enter a username (2-20 characters), password (6-20 characters), confirm the password, and then click Register.
 
 ### What if I forget my password?
-
 Password recovery is not supported. Please keep your password safe. If you forget it, you must delete the account and re-register, which will permanently delete all stored data.
 
 ### Where is my data stored?
-
 All data is stored in the browser's LocalStorage and is not uploaded to any server. Clearing browser data or using private/incognito mode may delete your save data. You should back up your data via Export Save.
 
 ### How do I migrate saves across devices?
-
 On the source device, open the Profile page and click Export Save to download a `.txt` file. On the target device, log in to the same account and click Import Save to select the file.
 
 ### Why can't I trade outside market hours?
-
 The system simulates real A-share trading hours (9:30-11:30 and 13:00-15:00). Outside those hours, the market stops updating and trading is disabled. You can adjust the time manually in the debug panel if needed.
 
 ### How do I open the Debug Panel?
-
 On the Profile page, click your username 5 times quickly in a row to open the debug panel.
 
 ### How are achievements unlocked?
-
 Achievements unlock automatically when specific conditions are met, such as your first trade, cumulative profit, continuous winning streaks, holding certain stocks, and similar actions. You can view all conditions in the achievement wall.
 
 ### Why didn't my auto-trade trigger?
-
 Possible reasons include:
-
-- The market was not in a trading session
-- The cooldown period had not expired (default 5s; 30s in interval mode)
-- The trigger condition was not met
-- The stock reached its maximum allowed trade count
-- Available funds or holdings were insufficient
+-   The market was not in a trading session
+-   The cooldown period had not expired (default 5s; 30s in interval mode)
+-   The trigger condition was not met
+-   The stock reached its maximum allowed trade count
+-   Available funds or holdings were insufficient
 
 ### What is the "影视飓风" stock?
-
-Stock code `999999` is an Easter-egg stock named "影视飓风". It has a special market algorithm with a 70% chance of rising and behaves better than ordinary stocks.
+Stock code `999999` is an Easter-egg stock named "影视飓风" (Yingshi Jufeng / MediaStorm). It has a special market algorithm with a 70% chance of rising and behaves better than ordinary stocks.
 
 ---
 
@@ -550,31 +530,31 @@ The project is centered around two core classes:
 
 **`StockSimulator`** (`game.js`): the main controller running as the singleton `window.game`, containing the complete business logic. The main method groups are as follows:
 
-| Module | Main Methods |
-| --- | --- |
-| User Management | `loadUsers`, `saveUsers`, `login`, `register`, `logout`, `deleteAccount`, `checkAutoLogin` |
-| Save Management | `showSaveSelect`, `renderSaveList`, `startGame`, `loadSave`, `deleteSave`, `showRenameSaveModal` |
-| Market Simulation | `initMarketData`, `generateBasePrice`, `generateHistory`, `startMarketSimulation`, `updateMarket`, `generateOrderBook` |
-| Time System | `updateGameTime`, `updateTimeDisplay`, `isTradingTime`, `randomizeGameTime` |
-| Stock List | `renderStockList`, `handleSortClick`, `searchStocks`, `toggleWatchlistMode`, `selectStock` |
-| Trading System | `executeTrade`, `validateTradeParameters`, `executeBuyTrade`, `executeSellTrade`, `recordTrade`, `updateAfterTrade` |
-| Position Management | `updatePortfolio`, `updatePortfolioRealTime`, `calculateStockValue` |
-| Achievement System | `updateProfile`, `checkAchievements`, `calculateSaveStats`, `calculateStats`, `showAchievementPopup` |
-| K-Line Chart | `drawKLine`, `drawVolume`, `chartZoomIn`, `chartZoomOut`, `chartReset`, `onChartWheel`, `onChartMouseDown`, `onChartTouchStart` |
-| Auto-Trade | `addAutoTradeStock`, `editAutoTradeStock`, `removeAutoTradeStock`, `startAutoTrade`, `pauseAutoTrade`, `stopAutoTrade`, `checkAutoTradeCondition`, `executeAutoTrade` |
-| Debug Panel | `showDebugPanel`, `debugSetTime`, `debugSetFund`, `debugUnlockAchievement`, `debugResetMarket` |
-| Tutorial System | `startTutorial`, `showTutorialStep`, `nextTutorial`, `endTutorial` |
-| Utility Methods | `formatMoney`, `showScreen`, `switchTab`, `setTheme`, `exportSave`, `importSave` |
+| Module             | Main Methods                                                                                                                     |
+| :----------------- | :------------------------------------------------------------------------------------------------------------------------------- |
+| User Management    | `loadUsers`, `saveUsers`, `login`, `register`, `logout`, `deleteAccount`, `checkAutoLogin`                                        |
+| Save Management    | `showSaveSelect`, `renderSaveList`, `startGame`, `loadSave`, `deleteSave`, `showRenameSaveModal`                                  |
+| Market Simulation  | `initMarketData`, `generateBasePrice`, `generateHistory`, `startMarketSimulation`, `updateMarket`, `generateOrderBook`            |
+| Time System        | `updateGameTime`, `updateTimeDisplay`, `isTradingTime`, `randomizeGameTime`                                                       |
+| Stock List         | `renderStockList`, `handleSortClick`, `searchStocks`, `toggleWatchlistMode`, `selectStock`                                         |
+| Trading System     | `executeTrade`, `validateTradeParameters`, `executeBuyTrade`, `executeSellTrade`, `recordTrade`, `updateAfterTrade`               |
+| Position Management| `updatePortfolio`, `updatePortfolioRealTime`, `calculateStockValue`                                                                |
+| Achievement System | `updateProfile`, `checkAchievements`, `calculateSaveStats`, `calculateStats`, `showAchievementPopup`                              |
+| K-Line Chart       | `drawKLine`, `drawVolume`, `chartZoomIn`, `chartZoomOut`, `chartReset`, `onChartWheel`, `onChartMouseDown`, `onChartTouchStart`   |
+| Auto-Trade         | `addAutoTradeStock`, `editAutoTradeStock`, `removeAutoTradeStock`, `startAutoTrade`, `pauseAutoTrade`, `stopAutoTrade`, `checkAutoTradeCondition`, `executeAutoTrade` |
+| Debug Panel        | `showDebugPanel`, `debugSetTime`, `debugSetFund`, `debugUnlockAchievement`, `debugResetMarket`                                    |
+| Tutorial System    | `startTutorial`, `showTutorialStep`, `nextTutorial`, `endTutorial`                                                                |
+| Utility Methods    | `formatMoney`, `showScreen`, `switchTab`, `setTheme`, `exportSave`, `importSave`                                                  |
 
 ### Startup Flow
 
 The application startup logic is located in `game.js`:
 
-1. `DOMContentLoaded` fires
-2. Right-click menu is disabled globally
-3. `StockSimulator` is instantiated, and the constructor calls `init()`
-4. `init()` then calls `loadUsers()` to load data and perform migration, `bindEvents()` to bind all events, and `checkAutoLogin()` to attempt automatic login
-5. Browser back-button behavior is handled via `popstate`
+1.  `DOMContentLoaded` fires
+2.  Right-click menu is disabled globally
+3.  `StockSimulator` is instantiated, and the constructor calls `init()`
+4.  `init()` then calls `loadUsers()` to load data and perform migration, `bindEvents()` to bind all events, and `checkAutoLogin()` to attempt automatic login
+5.  Browser back-button behavior is handled via `popstate`
 
 ### Data Flow
 
@@ -602,12 +582,12 @@ User action → Event listener → StockSimulator method
 
 ## Future Roadmap
 
-- [x] Expand stock universe (300+ stocks added)
-- [ ] Implement more complex market simulation
-- [ ] Add multiplayer competition mode
-- [x] Increase achievement variety (50+ items added)
-- [x] Optimize the user interface
-- [x] Add beginner tutorial support
+-   [x] Expand stock universe (300+ stocks added)
+-   [ ] Implement more complex market simulation
+-   [ ] Add multiplayer competition mode
+-   [x] Increase achievement variety (50+ items added)
+-   [x] Optimize the user interface
+-   [x] Add beginner tutorial support
 
 ---
 
@@ -615,7 +595,7 @@ User action → Event listener → StockSimulator method
 
 If you have questions or suggestions, please contact the developer:
 
-- Bilibili: Moke Xintu
+-   Bilibili: Moke Xintu
 
 ---
 
@@ -624,10 +604,3 @@ If you have questions or suggestions, please contact the developer:
 
 ## Star History
 
-<a href="https://www.star-history.com/?repos=ljy969%2FStock-simulator&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=ljy969/Stock-simulator&type=date&theme=dark&legend=top-left&sealed_token=-XxWGc_j93mihOeFBD_uLH8LUOGXrnCG3rfpaH0KGlF3EAsN4gi39zb_Cgv-owfEiStKCJYBQIcgUzDAtLl37CTZnVn1SeYblkwf1AaRcGmopZRz5u-6rg" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=ljy969/Stock-simulator&type=date&legend=top-left&sealed_token=-XxWGc_j93mihOeFBD_uLH8LUOGXrnCG3rfpaH0KGlF3EAsN4gi39zb_Cgv-owfEiStKCJYBQIcgUzDAtLl37CTZnVn1SeYblkwf1AaRcGmopZRz5u-6rg" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=ljy969/Stock-simulator&type=date&legend=top-left&sealed_token=-XxWGc_j93mihOeFBD_uLH8LUOGXrnCG3rfpaH0KGlF3EAsN4gi39zb_Cgv-owfEiStKCJYBQIcgUzDAtLl37CTZnVn1SeYblkwf1AaRcGmopZRz5u-6rg" />
- </picture>
-</a>
