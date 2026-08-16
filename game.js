@@ -177,9 +177,94 @@ class StockSimulator {
     }
 
     init() {
+        // 初始化国际化模块（必须在 bindEvents 之前，确保 DOM 渲染时语言已就绪）
+        I18n.init();
+        I18n.applyToDOM();
+
         this.loadUsers();
         this.bindEvents();
+        this.applyUserLanguage();
         this.checkAutoLogin();
+
+        // 注册语言变更回调：切换语言后刷新所有动态生成的内容
+        I18n.onChange((newLang) => {
+            this.onLanguageChanged(newLang);
+        });
+    }
+
+    /**
+     * 应用用户语言偏好（登录后从用户数据读取；未登录时使用 localStorage 中的偏好）
+     */
+    applyUserLanguage() {
+        // 优先使用当前用户已保存的语言偏好
+        if (this.currentUser && this.currentUser.lang) {
+            if (I18n.getCurrentLanguage() !== this.currentUser.lang) {
+                I18n.setLanguage(this.currentUser.lang, true);
+            }
+        }
+        // 同步设置面板中的语言下拉值
+        const langSelect = document.getElementById('language-select');
+        if (langSelect) {
+            langSelect.value = I18n.getCurrentLanguage();
+        }
+    }
+
+    /**
+     * 语言切换回调：刷新所有动态生成的 DOM 内容
+     * @param {string} newLang
+     */
+    onLanguageChanged(newLang) {
+        // 1. 保存语言偏好到用户数据（若已登录）
+        if (this.currentUser && this.currentUser.username && this.users[this.currentUser.username]) {
+            this.users[this.currentUser.username].lang = newLang;
+            this.currentUser.lang = newLang;
+            this.saveUsers();
+        }
+
+        // 2. 同步语言下拉选择器
+        const langSelect = document.getElementById('language-select');
+        if (langSelect) {
+            langSelect.value = newLang;
+        }
+
+        // 3. 刷新所有动态生成内容的渲染
+        if (this.currentUser) {
+            // 已登录：刷新存档列表/持仓/记录等动态内容
+            if (document.getElementById('save-select-screen').classList.contains('active')) {
+                this.renderSaveList();
+            }
+            if (this.currentSave) {
+                this.renderStockList(this.stockSearch.keyword);
+                if (this.selectedStock) {
+                    this.updateStockDetail();
+                }
+                this.updatePortfolio();
+                this.updateTradeAvailable();
+                this.updateAutoTradeStatus();
+                this.updateAutoTradeStats();
+                this.renderAutoTradeStockList();
+                this.updateProfile();
+                this.updateTimeDisplay();
+
+                // 刷新自动交易方向相关的动态文本（盈利目标选项等）
+                const checkedDirection = document.querySelector('input[name="auto-direction"]:checked');
+                if (checkedDirection) {
+                    this.onAutoTradeDirectionChange(checkedDirection.value);
+                }
+            }
+        }
+
+        // 4. 更新自选按钮文本
+        const watchlistBtn = document.getElementById('watchlist-toggle-btn');
+        if (watchlistBtn) {
+            watchlistBtn.textContent = I18n.t(this.watchlistMode ? 'market.allView' : 'market.watchlistView');
+        }
+
+        // 5. 更新暂停按钮文本
+        const pauseBtn = document.getElementById('time-pause-btn');
+        if (pauseBtn) {
+            pauseBtn.textContent = I18n.t(this.gameTimePaused ? 'settings.resume' : 'settings.pause');
+        }
     }
 
     // 用户数据管理
@@ -219,7 +304,7 @@ class StockSimulator {
             localStorage.setItem('stock_simulator_users', Crypto.encrypt(JSON.stringify(this.users)));
         } catch (error) {
             console.error('保存用户数据失败:', error);
-            this.showNotification('保存数据失败，可能是存储空间不足', 'error');
+            this.showNotification(I18n.t('save.saveFailedStorage'), 'error');
         }
     }
 
@@ -250,7 +335,7 @@ class StockSimulator {
                     loginPassword.focus();
                 } else {
                     // 无内容，显示提示
-                    document.getElementById('login-error').textContent = '请输入用户名';
+                    document.getElementById('login-error').textContent = I18n.t('auth.loginError.usernameRequired');
                 }
             }
         });
@@ -273,7 +358,7 @@ class StockSimulator {
                     regPassword.focus();
                 } else {
                     // 无内容，显示提示
-                    document.getElementById('reg-error').textContent = '请输入用户名';
+                    document.getElementById('reg-error').textContent = I18n.t('auth.loginError.usernameRequired');
                 }
             }
         });
@@ -534,6 +619,22 @@ class StockSimulator {
         document.getElementById('skip-tutorial').addEventListener('click', () => this.endTutorial());
         document.getElementById('next-tutorial').addEventListener('click', () => this.nextTutorial());
 
+        // 语言切换：设置面板下拉
+        const languageSelect = document.getElementById('language-select');
+        if (languageSelect) {
+            languageSelect.addEventListener('change', (e) => {
+                I18n.setLanguage(e.target.value);
+            });
+        }
+
+        // 语言切换：登录页右上角图标按钮（中英文互切）
+        const authLangToggle = document.getElementById('auth-lang-toggle');
+        if (authLangToggle) {
+            authLangToggle.addEventListener('click', () => {
+                I18n.toggleLanguage();
+            });
+        }
+
         // 图表控制按钮
         document.getElementById('chart-zoom-in').addEventListener('click', () => this.chartZoomIn());
         document.getElementById('chart-zoom-out').addEventListener('click', () => this.chartZoomOut());
@@ -686,7 +787,7 @@ class StockSimulator {
         console.log('用户名:', username, '密码长度:', password.length);
 
         if (!username || !password) {
-            errorEl.textContent = '请输入用户名和密码';
+            errorEl.textContent = I18n.t('auth.loginError.empty');
             console.log('错误: 用户名或密码为空');
             return;
         }
@@ -694,7 +795,7 @@ class StockSimulator {
         const user = this.users[username];
         console.log('用户数据:', user);
         if (!user) {
-            errorEl.textContent = '用户不存在';
+            errorEl.textContent = I18n.t('auth.loginError.userNotFound');
             console.log('错误: 用户不存在');
             return;
         }
@@ -702,7 +803,7 @@ class StockSimulator {
         const hashedPassword = Crypto.hash(password);
         console.log('输入密码哈希:', hashedPassword, '存储密码哈希:', user.passwordHash);
         if (hashedPassword !== user.passwordHash) {
-            errorEl.textContent = '密码错误';
+            errorEl.textContent = I18n.t('auth.loginError.wrongPassword');
             console.log('错误: 密码不匹配');
             return;
         }
@@ -727,7 +828,12 @@ class StockSimulator {
         if (refreshRateSelect) {
             refreshRateSelect.value = this.refreshRate;
         }
-        
+
+        // 恢复用户语言偏好
+        if (this.currentUser.lang) {
+            I18n.setLanguage(this.currentUser.lang, true);
+        }
+
         console.log('准备调用showSaveSelect');
         this.showSaveSelect();
         console.log('showSaveSelect调用完成');
@@ -744,25 +850,25 @@ class StockSimulator {
         console.log('用户名:', username, '密码长度:', password.length, '确认密码长度:', confirm.length);
 
         if (!username || username.length < 2 || username.length > 20) {
-            errorEl.textContent = '用户名需2-20位';
+            errorEl.textContent = I18n.t('auth.regError.usernameLength');
             console.log('错误: 用户名长度不符合要求');
             return;
         }
 
         if (!password || password.length < 6 || password.length > 20) {
-            errorEl.textContent = '密码需6-20位';
+            errorEl.textContent = I18n.t('auth.regError.passwordLength');
             console.log('错误: 密码长度不符合要求');
             return;
         }
 
         if (password !== confirm) {
-            errorEl.textContent = '两次密码不一致';
+            errorEl.textContent = I18n.t('auth.regError.passwordMismatch');
             console.log('错误: 两次密码不一致');
             return;
         }
 
         if (this.users[username]) {
-            errorEl.textContent = '用户名已存在';
+            errorEl.textContent = I18n.t('auth.regError.userExists');
             console.log('错误: 用户名已存在');
             return;
         }
@@ -775,6 +881,7 @@ class StockSimulator {
             tutorialCompleted: false,
             theme: 'dark',  // 默认主题
             refreshRate: 3000,  // 默认刷新速度 3秒
+            lang: I18n.getCurrentLanguage(),  // 默认语言：跟随当前选择
             stats: {
                 totalGames: 0,
                 totalTrades: 0,
@@ -784,7 +891,7 @@ class StockSimulator {
         };
 
         this.saveUsers();
-        errorEl.textContent = '注册成功，请登录';
+        errorEl.textContent = I18n.t('auth.regSuccess');
         errorEl.style.color = '#52c41a';
         
         setTimeout(() => {
@@ -797,7 +904,7 @@ class StockSimulator {
     // 登出
     logout() {
         // 显示确认对话框
-        if (!confirm('确定要退出登录吗？')) {
+        if (!confirm(I18n.t('logout.confirm'))) {
             return;
         }
         
@@ -849,7 +956,7 @@ class StockSimulator {
         // document.body.className = '';
         
         // 显示成功提示
-        this.showNotification('已成功退出登录');
+        this.showNotification(I18n.t('auth.logoutSuccess'));
         
         // 重定向到登录页面
         this.showScreen('auth-screen');
@@ -866,33 +973,34 @@ class StockSimulator {
     // 删除用户账户
     deleteAccount() {
         // 显示确认对话框
-        const confirmMessage = '确定要注销您的账户吗？此操作将永久删除您的所有数据，包括所有存档和成就，且无法恢复。\n\n请输入 "DELETE" 确认此操作：';
+        const confirmMessage = I18n.t('deleteAccount.confirmText');
         const userInput = prompt(confirmMessage);
-        
+
         // 验证用户输入
         if (userInput !== 'DELETE') {
+            alert(I18n.t('deleteAccount.inputMismatch'));
             return;
         }
-        
+
         // 再次确认
-        if (!confirm('您确定要永久删除您的账户吗？此操作无法撤销。')) {
+        if (!confirm(I18n.t('deleteAccount.warning'))) {
             return;
         }
-        
+
         // 删除用户账户
         if (this.currentUser && this.currentUser.username) {
             const username = this.currentUser.username;
             delete this.users[username];
             this.saveUsers();
-            
+
             // 清除当前用户状态
             this.currentUser = null;
             this.currentSave = null;
             localStorage.removeItem('stock_simulator_last_user');
-            
+
             // 显示成功消息
-            alert('账户已成功注销。感谢您使用我们的服务！');
-            
+            alert(I18n.t('deleteAccount.success'));
+
             // 重定向到登录页面
             this.showScreen('auth-screen');
         }
@@ -922,23 +1030,24 @@ class StockSimulator {
 
         const saves = this.currentUser.saves || [];
         if (saves.length === 0) {
-            listEl.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:40px;">暂无存档，开启新局吧！</p>';
+            listEl.innerHTML = `<p style="text-align:center;color:var(--text-secondary);padding:40px;">${I18n.t('save.empty')}</p>`;
             return;
         }
 
         saves.forEach((save, index) => {
             const item = document.createElement('div');
             item.className = 'save-item';
-            const saveName = save.name || `存档 ${index + 1}`;
+            const saveName = save.name || I18n.t('save.defaultName', { index: index + 1 });
+            const dateStr = new Date(save.createdAt).toLocaleDateString(I18n.getCurrentLanguage());
             item.innerHTML = `
                 <div class="save-info">
                     <h4>${saveName}</h4>
-                    <p>资金: ¥${this.formatMoney(save.fund)} | 创建于 ${new Date(save.createdAt).toLocaleDateString()}</p>
+                    <p>${I18n.t('save.info', { fund: this.formatMoney(save.fund), date: dateStr })}</p>
                 </div>
                 <div class="save-actions">
-                    <button class="btn-enter" data-index="${index}">进入</button>
-                    <button class="btn-rename" data-index="${index}">修改名称</button>
-                    <button class="btn-delete" data-index="${index}">删除</button>
+                    <button class="btn-enter" data-index="${index}">${I18n.t('common.enter')}</button>
+                    <button class="btn-rename" data-index="${index}">${I18n.t('common.rename')}</button>
+                    <button class="btn-delete" data-index="${index}">${I18n.t('common.delete')}</button>
                 </div>
             `;
             listEl.appendChild(item);
@@ -961,7 +1070,7 @@ class StockSimulator {
         listEl.querySelectorAll('.btn-delete').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (confirm('确定删除此存档吗？')) {
+                if (confirm(I18n.t('save.deleteConfirm'))) {
                     this.deleteSave(parseInt(e.target.dataset.index));
                 }
             });
@@ -983,7 +1092,7 @@ class StockSimulator {
         } else {
             const custom = parseFloat(document.getElementById('custom-fund').value);
             if (!custom || custom < 10) {
-                alert('请输入有效的初始资金（至少10万元）');
+                alert(I18n.t('setup.fundInvalid'));
                 return;
             }
             initialFund = custom * 10000;
@@ -1170,7 +1279,7 @@ class StockSimulator {
         const watchlistBtn = document.getElementById('watchlist-toggle-btn');
         if (watchlistBtn) {
             watchlistBtn.classList.remove('active');
-            watchlistBtn.textContent = '查看自选';
+            watchlistBtn.textContent = I18n.t('market.watchlistView');
         }
         
         // 刷新个人资料页面数据（包括成就墙）
@@ -1194,7 +1303,7 @@ class StockSimulator {
     showRenameSaveModal(index) {
         this.renameSaveIndex = index;
         const save = this.currentUser.saves[index];
-        const currentName = save.name || `存档 ${index + 1}`;
+        const currentName = save.name || I18n.t('save.defaultName', { index: index + 1 });
         
         const modal = document.getElementById('rename-save-modal');
         const input = document.getElementById('rename-save-input');
@@ -1223,19 +1332,19 @@ class StockSimulator {
         
         // 验证输入
         if (!newName) {
-            errorEl.textContent = '存档名称不能为空';
+            errorEl.textContent = I18n.t('rename.error.empty');
             return;
         }
-        
+
         if (newName.length < 1 || newName.length > 20) {
-            errorEl.textContent = '存档名称长度必须在1-20个字符之间';
+            errorEl.textContent = I18n.t('rename.error.length');
             return;
         }
-        
+
         // 验证字符（允许中英文、数字及常用符号）
         const validPattern = /^[\u4e00-\u9fa5a-zA-Z0-9\s\-_\.，。！？、：""''（）【】]+$/;
         if (!validPattern.test(newName)) {
-            errorEl.textContent = '存档名称包含不支持的字符';
+            errorEl.textContent = I18n.t('rename.error.invalid');
             return;
         }
         
@@ -1255,7 +1364,7 @@ class StockSimulator {
             this.renderSaveList();
             
             // 显示成功提示
-            this.showNotification('存档名称修改成功');
+            this.showNotification(I18n.t('save.renameSuccess'));
             
             // 关闭模态窗口
             this.hideRenameSaveModal();
@@ -1405,31 +1514,31 @@ class StockSimulator {
         const totalMinutes = this.gameTime.hour * 60 + this.gameTime.minute;
         
         // 获取当前状态文本
-        let statusText = '正常交易时间';
+        let statusText = I18n.t('marketStatus.normal');
         let statusClass = 'status';
         if (this.gameTimePaused) {
-            statusText = '已暂停';
+            statusText = I18n.t('marketStatus.paused');
             statusClass = 'status paused';
         } else if (totalMinutes >= 570 && totalMinutes <= 575) { // 9:30-9:35
-            statusText = '早起的鸟儿时间';
+            statusText = I18n.t('marketStatus.earlyBird');
             statusClass = 'status early';
         } else if (totalMinutes >= 695 && totalMinutes <= 700) { // 11:35-11:40
-            statusText = '夜猫子时间';
+            statusText = I18n.t('marketStatus.nightOwl');
             statusClass = 'status late';
         } else if (totalMinutes >= 780 && totalMinutes <= 785) { // 13:00-13:05 下午开盘
-            statusText = '下午开盘时间';
+            statusText = I18n.t('marketStatus.afternoonOpen');
             statusClass = 'status afternoon';
         } else if (!this.isTradingTime()) {
-            statusText = '非交易时间';
+            statusText = I18n.t('marketStatus.notTrading');
             statusClass = 'status';
         }
-        
+
         if (timeEl && statusEl) {
             timeEl.textContent = timeStr;
             statusEl.textContent = statusText;
             statusEl.className = statusClass;
         }
-        
+
         // 更新持仓区域的时间和状态显示
         if (portfolioTimeEl) {
             portfolioTimeEl.textContent = timeStr;
@@ -1437,11 +1546,11 @@ class StockSimulator {
         if (portfolioStatusEl) {
             portfolioStatusEl.textContent = statusText;
         }
-        
+
         // 同步设置面板暂停/继续按钮的文案
         const pauseBtn = document.getElementById('time-pause-btn');
         if (pauseBtn) {
-            pauseBtn.textContent = this.gameTimePaused ? '继续' : '暂停';
+            pauseBtn.textContent = I18n.t(this.gameTimePaused ? 'settings.resume' : 'settings.pause');
         }
     }
 
@@ -1484,7 +1593,7 @@ class StockSimulator {
     toggleTimePause() {
         this.gameTimePaused = !this.gameTimePaused;
         this.updateTimeDisplay();
-        this.showNotification(this.gameTimePaused ? '游戏时间已暂停' : '游戏时间已继续');
+        this.showNotification(I18n.t(this.gameTimePaused ? 'notification.timePaused' : 'notification.timeResumed'));
     }
 
     // 计算跳过的目标时间（返回当天分钟数 0-1439；null 表示无需跳过）
@@ -1512,24 +1621,24 @@ class StockSimulator {
     // 时间控制：跳过（加速推进游戏时间，不忽略正常进程）
     skipTime() {
         if (this.skipMode) {
-            this.showNotification('正在跳过中，请稍候...');
+            this.showNotification(I18n.t('notification.skipping'));
             return;
         }
         if (!this.currentSave) {
-            this.showNotification('请先进入游戏再使用跳过功能');
+            this.showNotification(I18n.t('notification.requireGame'));
             return;
         }
 
         const target = this.getSkipTargetMinutes();
         if (target === null) {
-            this.showNotification('已接近本轮交易结束，无需跳过');
+            this.showNotification(I18n.t('notification.noSkipNeeded'));
             return;
         }
 
         const cur = this.gameTime.hour * 60 + this.gameTime.minute;
         const advance = (target - cur + 1440) % 1440;
         if (advance <= 0) {
-            this.showNotification('已到达目标时间');
+            this.showNotification(I18n.t('notification.arrivedTarget'));
             return;
         }
 
@@ -1541,7 +1650,7 @@ class StockSimulator {
 
         this.skipMode = true;
         this.skipTicksRemaining = advance;
-        this.showNotification(`开始跳过时间（约 ${advance} 分钟）...`);
+        this.showNotification(I18n.t('notification.startSkip', { minutes: advance }));
 
         // 加速执行完整市场流程，直至到达目标时间
         setTimeout(() => this.skipTick(), 0);
@@ -1591,7 +1700,7 @@ class StockSimulator {
         }
         this.updatePortfolioRealTime();
         this.updateTradeAvailable();
-        this.showNotification('时间跳过完成');
+        this.showNotification(I18n.t('notification.skipCompleted'));
     }
 
     // 取消进行中的跳过（例如切换存档时调用）
@@ -1807,7 +1916,7 @@ class StockSimulator {
                 
                 switch (this.stockSort.field) {
                     case 'name':
-                        comparison = a.name.localeCompare(b.name, 'zh-CN');
+                        comparison = a.name.localeCompare(b.name, I18n.getCurrentLanguage());
                         break;
                     case 'price':
                         comparison = dataA.price - dataB.price;
@@ -1913,12 +2022,12 @@ class StockSimulator {
         
         if (this.watchlistMode) {
             btn.classList.add('active');
-            btn.textContent = '查看全部';
-            this.showNotification('已切换到自选模式', 'success');
+            btn.textContent = I18n.t('market.allView');
+            this.showNotification(I18n.t('notification.switchToWatchlist'), 'success');
         } else {
             btn.classList.remove('active');
-            btn.textContent = '查看自选';
-            this.showNotification('已切换到全部模式', 'success');
+            btn.textContent = I18n.t('market.watchlistView');
+            this.showNotification(I18n.t('notification.switchToAll'), 'success');
         }
         
         // 重新渲染股票列表
@@ -1957,11 +2066,11 @@ class StockSimulator {
         if (index === -1) {
             // 添加到自选
             watchlist.push(code);
-            this.showNotification('已添加到自选');
+            this.showNotification(I18n.t('notification.watchlistAdded'));
         } else {
             // 从自选移除
             watchlist.splice(index, 1);
-            this.showNotification('已从自选移除');
+            this.showNotification(I18n.t('notification.watchlistRemoved'));
         }
         
         this.currentSave.watchlist = watchlist;
@@ -1982,10 +2091,10 @@ class StockSimulator {
         const btn = document.getElementById('add-watch-btn');
         
         if (watchlist.includes(code)) {
-            btn.textContent = '-自选';
+            btn.textContent = I18n.t('market.removeWatch');
             btn.classList.add('active');
         } else {
-            btn.textContent = '+自选';
+            btn.textContent = I18n.t('market.addWatch');
             btn.classList.remove('active');
         }
     }
@@ -2032,19 +2141,19 @@ class StockSimulator {
 
         // 验证输入
         if (!currentPassword) {
-            errorEl.textContent = '请输入当前密码';
+            errorEl.textContent = I18n.t('password.requireCurrent');
             errorEl.style.display = 'block';
             return;
         }
 
         if (!newPassword || newPassword.length < 6 || newPassword.length > 20) {
-            errorEl.textContent = '新密码需6-20位';
+            errorEl.textContent = I18n.t('password.invalidNewLength');
             errorEl.style.display = 'block';
             return;
         }
 
         if (newPassword !== confirmPassword) {
-            errorEl.textContent = '两次密码不一致';
+            errorEl.textContent = I18n.t('password.mismatch');
             errorEl.style.display = 'block';
             return;
         }
@@ -2052,14 +2161,14 @@ class StockSimulator {
         // 验证当前密码
         const hashedCurrentPassword = Crypto.hash(currentPassword);
         if (hashedCurrentPassword !== this.currentUser.passwordHash) {
-            errorEl.textContent = '当前密码错误';
+            errorEl.textContent = I18n.t('password.wrongCurrent');
             errorEl.style.display = 'block';
             return;
         }
 
         // 验证新密码与当前密码是否相同
         if (currentPassword === newPassword) {
-            errorEl.textContent = '新密码不能与当前密码相同';
+            errorEl.textContent = I18n.t('password.sameAsCurrent');
             errorEl.style.display = 'block';
             return;
         }
@@ -2077,7 +2186,7 @@ class StockSimulator {
         this.saveUsers();
 
         // 显示成功提示
-        this.showNotification('密码修改成功');
+        this.showNotification(I18n.t('password.success'));
 
         // 关闭模态窗口
         this.hideChangePasswordModal();
@@ -2431,9 +2540,18 @@ class StockSimulator {
             ctx.fillStyle = '#888';
             ctx.font = '11px Arial';
             ctx.textAlign = 'right';
-            const volumeText = volume >= 100000000 ? (volume / 100000000).toFixed(2) + '亿' : 
-                              volume >= 10000 ? (volume / 10000).toFixed(2) + '万' : 
-                              volume.toFixed(0);
+            // 成交量格式化（根据语言使用不同的单位体系）
+            let volumeText;
+            if (I18n.getCurrentLanguage() === 'en-US') {
+                volumeText = volume >= 1000000000 ? (volume / 1000000000).toFixed(2) + 'B' :
+                             volume >= 1000000 ? (volume / 1000000).toFixed(2) + 'M' :
+                             volume >= 1000 ? (volume / 1000).toFixed(2) + 'K' :
+                             volume.toFixed(0);
+            } else {
+                volumeText = volume >= 100000000 ? (volume / 100000000).toFixed(2) + '亿' :
+                             volume >= 10000 ? (volume / 10000).toFixed(2) + '万' :
+                             volume.toFixed(0);
+            }
             ctx.fillText(volumeText, leftPadding - 5, y + 4);
         }
 
@@ -2697,7 +2815,7 @@ class StockSimulator {
             : amount * this.currentSave.settings.sellFee;
         const total = type === 'buy' ? amount + fee : amount - fee;
 
-        document.getElementById(`${type}-estimate`).textContent = `¥${this.formatMoney(total)} (含手续费¥${fee.toFixed(2)})`;
+        document.getElementById(`${type}-estimate`).textContent = I18n.t('trade.estimateWithFee', { total: this.formatMoney(total), fee: fee.toFixed(2) });
     }
 
     // 设置交易数量
@@ -2733,7 +2851,7 @@ class StockSimulator {
         const holdings = Object.entries(this.currentSave.holdings || {});
         
         if (holdings.length === 0) {
-            holdingsList.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px;">暂无持仓</p>';
+            holdingsList.innerHTML = `<p style="text-align:center;color:var(--text-secondary);padding:20px;">${I18n.t('portfolio.noHoldings')}</p>`;
             return;
         }
 
@@ -2752,7 +2870,7 @@ class StockSimulator {
                         <div class="code">${code}</div>
                     </div>
                     <div class="holding-qty">
-                        <div class="qty">${holding.quantity}股</div>
+                        <div class="qty">${I18n.t('trade.shares', { quantity: holding.quantity })}</div>
                         <div class="pnl ${pnlClass}">${pnlSymbol}¥${this.formatMoney(pnl)}</div>
                     </div>
                 </div>
@@ -2828,23 +2946,23 @@ class StockSimulator {
         // 检查成就
         this.checkAchievements();
 
-        alert(`${type === 'buy' ? '买入' : '卖出'}成功！`);
+        alert(I18n.t(type === 'buy' ? 'trade.buySuccess' : 'trade.sellSuccess'));
     }
 
     // 验证交易参数
     validateTradeParameters(type, code, price, quantity) {
         if (!code || !price || !quantity) {
-            return { valid: false, message: '请填写完整的交易信息' };
+            return { valid: false, message: I18n.t('trade.incompleteInfo') };
         }
 
         // 验证交易时间
         if (!this.isTradingTime()) {
-            return { valid: false, message: '当前不在交易时间内，无法进行交易' };
+            return { valid: false, message: I18n.t('trade.notInTradingTime') };
         }
 
         // 验证价格合理性
         if (price <= 0) {
-            return { valid: false, message: '价格必须大于0' };
+            return { valid: false, message: I18n.t('trade.invalidPrice') };
         }
 
         // 验证价格与市场价格的合理性
@@ -2855,39 +2973,47 @@ class StockSimulator {
             const limitDownPrice = this.limitManager.calculateLimitDownPrice(stockData.prevClose);
             const MAX_PRICE_DEVIATION = 0.20; // 委托价与市价最大偏离度 20%（硬阻断）
             const WARN_PRICE_DEVIATION = 0.10; // 委托价与市价偏离度 10%（警示确认）
-            
+
             // 检查熔断状态
             if (this.limitManager.isCircuitBreakerActive(code)) {
-                return { valid: false, message: '该股票处于熔断状态，暂时无法交易' };
+                return { valid: false, message: I18n.t('trade.circuitBreakerActive') };
             }
-            
+
             // 涨跌停价格校验（基于昨收价）
             if (type === 'buy' && price > limitUpPrice) {
-                return { valid: false, message: `买入价格不能超过涨停价 ${limitUpPrice.toFixed(2)}` };
+                return { valid: false, message: I18n.t('trade.exceedLimitUp', { price: limitUpPrice.toFixed(2) }) };
             }
             if (type === 'sell' && price < limitDownPrice) {
-                return { valid: false, message: `卖出价格不能低于跌停价 ${limitDownPrice.toFixed(2)}` };
+                return { valid: false, message: I18n.t('trade.belowLimitDown', { price: limitDownPrice.toFixed(2) }) };
             }
-            
+
             // 委托价与当前市价偏离度校验
             const deviation = Math.abs(price - marketPrice) / marketPrice;
             const lowerBound = marketPrice * (1 - MAX_PRICE_DEVIATION);
             const upperBound = marketPrice * (1 + MAX_PRICE_DEVIATION);
-            
+
             if (deviation > MAX_PRICE_DEVIATION) {
                 // 偏离超过20%：硬阻断
-                return { valid: false, message: `委托价与当前市价(${marketPrice.toFixed(2)})偏离超过${MAX_PRICE_DEVIATION * 100}%，请输入合理价格（允许范围：${lowerBound.toFixed(2)} ~ ${upperBound.toFixed(2)}）` };
+                return { valid: false, message: I18n.t('trade.priceDeviationExceeded', {
+                    price: marketPrice.toFixed(2),
+                    percent: (MAX_PRICE_DEVIATION * 100).toFixed(0),
+                    lower: lowerBound.toFixed(2),
+                    upper: upperBound.toFixed(2)
+                }) };
             } else if (deviation > WARN_PRICE_DEVIATION) {
                 // 偏离10%-20%：警示确认
-                if (!confirm(`您输入的价格与当前市场价格(${marketPrice.toFixed(2)})偏离 ${(deviation * 100).toFixed(1)}%，确定要继续交易吗？`)) {
-                    return { valid: false, message: '交易已取消' };
+                if (!confirm(I18n.t('trade.priceDeviationWarn', {
+                    price: marketPrice.toFixed(2),
+                    percent: (deviation * 100).toFixed(1)
+                }))) {
+                    return { valid: false, message: I18n.t('trade.cancelled') };
                 }
             }
         }
 
         const stock = StockPool.find(s => s.code === code);
         if (!stock) {
-            return { valid: false, message: '股票代码不存在' };
+            return { valid: false, message: I18n.t('trade.stockNotExist') };
         }
 
         return { valid: true, stock };
@@ -2897,14 +3023,14 @@ class StockSimulator {
     executeBuyTrade(code, stock, price, quantity, amount, fee) {
         const totalCost = amount + fee;
         if (totalCost > this.currentSave.fund) {
-            return { success: false, message: '资金不足' };
+            return { success: false, message: I18n.t('trade.insufficientFund') };
         }
 
         // T+1检查
         if (!this.currentSave.settings.t0Mode) {
             const dayTrades = this.currentSave.dayTrades[code] || { buy: 0, sell: 0 };
             if (dayTrades.sell > 0) {
-                return { success: false, message: 'T+1规则：当日卖出的股票不能当日买回' };
+                return { success: false, message: I18n.t('trade.t1BuyBlocked') };
             }
         }
 
@@ -2950,7 +3076,7 @@ class StockSimulator {
     executeSellTrade(code, stock, price, quantity, amount, fee) {
         const holding = this.currentSave.holdings[code];
         if (!holding || holding.quantity < quantity) {
-            return { success: false, message: '持仓不足' };
+            return { success: false, message: I18n.t('trade.insufficientHolding') };
         }
 
         // T+1检查
@@ -2958,7 +3084,7 @@ class StockSimulator {
             const dayTrades = this.currentSave.dayTrades[code] || { buy: 0, sell: 0 };
             const availableQty = holding.quantity - dayTrades.buy;
             if (quantity > availableQty) {
-                return { success: false, message: `T+1规则：今日买入的${dayTrades.buy}股不能卖出，可卖${availableQty}股` };
+                return { success: false, message: I18n.t('trade.t1SellBlocked', { bought: dayTrades.buy, available: availableQty }) };
             }
         }
 
@@ -3067,7 +3193,7 @@ class StockSimulator {
         const holdings = Object.entries(this.currentSave.holdings);
 
         if (holdings.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;">暂无持仓</td></tr>';
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:30px;">${I18n.t('portfolio.noHoldings')}</td></tr>`;
         } else {
             tbody.innerHTML = holdings.map(([code, holding]) => {
                 const data = this.stockData.get(code);
@@ -3116,13 +3242,13 @@ class StockSimulator {
                     menu.style.top = `${e.clientY}px`;
                     menu.innerHTML = `
                         <div class="context-menu-item" data-action="trade" data-code="${code}">
-                            交易
+                            ${I18n.t('portfolio.contextMenu.trade')}
                         </div>
                         <div class="context-menu-item" data-action="auto-trade" data-code="${code}">
-                            自动交易
+                            ${I18n.t('portfolio.contextMenu.autoTrade')}
                         </div>
                         <div class="context-menu-item" data-action="view-detail" data-code="${code}">
-                            查看详情
+                            ${I18n.t('portfolio.contextMenu.viewDetail')}
                         </div>
                     `;
                     
@@ -3181,16 +3307,16 @@ class StockSimulator {
         // 更新成交记录
         const recordsTbody = document.getElementById('trade-records-tbody');
         if (this.currentSave.records.length === 0) {
-            recordsTbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;">暂无交易记录</td></tr>';
+            recordsTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:30px;">${I18n.t('portfolio.noRecords')}</td></tr>`;
         } else {
             recordsTbody.innerHTML = this.currentSave.records.slice(0, 20).map(record => {
                 const date = new Date(record.time);
                 const typeClass = record.type === 'buy' ? 'down' : 'up';
                 return `
                     <tr>
-                        <td>${date.toLocaleString()}</td>
+                        <td>${date.toLocaleString(I18n.getCurrentLanguage())}</td>
                         <td>${record.name}<br><small>${record.code}</small></td>
-                        <td class="${typeClass}">${record.type === 'buy' ? '买入' : '卖出'}</td>
+                        <td class="${typeClass}">${I18n.t(record.type === 'buy' ? 'common.buy' : 'common.sell')}</td>
                         <td>¥${record.price.toFixed(2)}</td>
                         <td>${record.quantity}</td>
                         <td>¥${this.formatMoney(Math.abs(record.amount))}</td>
@@ -3211,7 +3337,7 @@ class StockSimulator {
         if (!this.currentUser) return;
 
         document.getElementById('profile-username').textContent = this.currentUser.username;
-        document.getElementById('reg-time').textContent = new Date(this.currentUser.createdAt).toLocaleDateString();
+        document.getElementById('reg-time').textContent = new Date(this.currentUser.createdAt).toLocaleDateString(I18n.getCurrentLanguage());
 
         // 统计
         const saves = this.currentUser.saves || [];
@@ -3248,8 +3374,8 @@ class StockSimulator {
                 <div class="achievement-card ${unlocked ? 'unlocked' : 'locked'}">
                     <div class="achievement-icon-small">${ach.icon}</div>
                     <div class="achievement-info">
-                        <h4>${ach.name}</h4>
-                        <p>${ach.desc}</p>
+                        <h4>${AchievementSystem.getName(ach)}</h4>
+                        <p>${AchievementSystem.getDesc(ach)}</p>
                     </div>
                     <span class="achievement-level-badge ${ach.level}">${AchievementSystem.getLevelName(ach.level)}</span>
                 </div>
@@ -3265,17 +3391,17 @@ class StockSimulator {
             toggleBtn.style.display = 'block';
             
             // 设置按钮文本
-            toggleBtn.textContent = isExpanded ? '收起' : '展开全部';
-            
+            toggleBtn.textContent = I18n.t(isExpanded ? 'profile.collapse' : 'profile.expandAll');
+
             // 应用展开/收缩状态
             this.toggleAchievements(isExpanded, false);
-            
+
             // 绑定点击事件
             toggleBtn.onclick = () => {
                 const currentState = localStorage.getItem('achievements-expanded') === 'true';
                 const newState = !currentState;
                 this.toggleAchievements(newState, true);
-                toggleBtn.textContent = newState ? '收起' : '展开全部';
+                toggleBtn.textContent = I18n.t(newState ? 'profile.collapse' : 'profile.expandAll');
                 localStorage.setItem('achievements-expanded', newState);
             };
         }
@@ -3664,7 +3790,7 @@ class StockSimulator {
     // 显示成就弹窗
     showAchievementPopup(achievement) {
         const popup = document.getElementById('achievement-popup');
-        document.getElementById('achievement-name').textContent = achievement.name;
+        document.getElementById('achievement-name').textContent = AchievementSystem.getName(achievement);
         popup.classList.add('show');
         
         // 绑定查看按钮事件
@@ -3688,15 +3814,15 @@ class StockSimulator {
         }
         
         this.tutorialSteps = [
-            { text: '欢迎来到股市模拟器！这里你可以零压力体验炒股乐趣。', element: null, tab: null },
-            { text: '在行情页面，你可以查看股票列表和K线图。点击股票查看详情。', element: '.market-sidebar', tab: 'market' },
-            { text: '五档行情显示买卖盘情况，帮助你判断市场热度。', element: '.detail-quote', tab: 'market' },
-            { text: '点击导航栏可以切换不同页面。', element: '.main-nav', tab: null },
-            { text: '在交易页面，输入股票代码、价格和数量即可下单。', element: '.trade-form', tab: 'trade' },
-            { text: '持仓页面展示你的资产状况和交易记录。', element: '.position-list', tab: 'position' },
-            { text: '个人主页可以查看成就、切换主题和导出存档。', element: '.profile-header', tab: 'profile' },
-            { text: '提示：连续点击个人主页空白区域5次可打开调试面板哦~', element: null, tab: 'profile' },
-            { text: '祝你投资愉快！记住：股市有风险，入市需谨慎。', element: null, tab: null }
+            { text: I18n.t('tutorial.step1'), element: null, tab: null },
+            { text: I18n.t('tutorial.step2'), element: '.market-sidebar', tab: 'market' },
+            { text: I18n.t('tutorial.step3'), element: '.detail-quote', tab: 'market' },
+            { text: I18n.t('tutorial.step4'), element: '.main-nav', tab: null },
+            { text: I18n.t('tutorial.step5'), element: '.trade-form', tab: 'trade' },
+            { text: I18n.t('tutorial.step6'), element: '.position-list', tab: 'position' },
+            { text: I18n.t('tutorial.step7'), element: '.profile-header', tab: 'profile' },
+            { text: I18n.t('tutorial.step8'), element: null, tab: 'profile' },
+            { text: I18n.t('tutorial.step9'), element: null, tab: null }
         ];
         this.tutorialStep = 0;
         this.showTutorialStep();
@@ -3877,8 +4003,8 @@ class StockSimulator {
         const modal = document.getElementById('debug-modal');
         const select = document.getElementById('debug-achievement');
         
-        select.innerHTML = AchievementSystem.achievements.map(ach => 
-            `<option value="${ach.id}">${ach.name} (${AchievementSystem.getLevelName(ach.level)})</option>`
+        select.innerHTML = AchievementSystem.achievements.map(ach =>
+            `<option value="${ach.id}">${AchievementSystem.getName(ach)} (${AchievementSystem.getLevelName(ach.level)})</option>`
         ).join('');
         
         // 更新当前时间显示
@@ -3896,22 +4022,22 @@ class StockSimulator {
             const hour = this.gameTime.hour.toString().padStart(2, '0');
             const minute = this.gameTime.minute.toString().padStart(2, '0');
             timeEl.textContent = `${hour}:${minute}`;
-            
+
             const totalMinutes = this.gameTime.hour * 60 + this.gameTime.minute;
             if (totalMinutes >= 570 && totalMinutes <= 575) {
-                statusEl.textContent = '早起的鸟儿时间';
+                statusEl.textContent = I18n.t('marketStatus.earlyBird');
                 statusEl.style.color = '#2980b9';
             } else if (totalMinutes >= 695 && totalMinutes <= 700) {
-                statusEl.textContent = '夜猫子时间';
+                statusEl.textContent = I18n.t('marketStatus.nightOwl');
                 statusEl.style.color = '#9b59b6';
             } else if (totalMinutes >= 780 && totalMinutes <= 785) {
-                statusEl.textContent = '下午开盘时间';
+                statusEl.textContent = I18n.t('marketStatus.afternoonOpen');
                 statusEl.style.color = '#f39c12';
             } else if (!this.isTradingTime()) {
-                statusEl.textContent = '非交易时间';
+                statusEl.textContent = I18n.t('marketStatus.notTrading');
                 statusEl.style.color = '#e74c3c';
             } else {
-                statusEl.textContent = '正常交易时间';
+                statusEl.textContent = I18n.t('marketStatus.normal');
                 statusEl.style.color = '#27ae60';
             }
         }
@@ -3939,19 +4065,19 @@ class StockSimulator {
         const minute = parseInt(minuteInput.value);
         
         if (isNaN(hour) || isNaN(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
-            alert('请输入有效的时间（时: 0-23, 分: 0-59）');
+            alert(I18n.t('debug.invalidTime'));
             return;
         }
-        
+
         // 设置时间并标记为手动设置
         this.gameTime.hour = hour;
         this.gameTime.minute = minute;
         this.gameTime.manualSet = true;
-        
+
         this.updateTimeDisplay();
         this.updateDebugTimeDisplay();
-        
-        alert(`时间已设置为 ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
+
+        alert(I18n.t('debug.timeSet', { time: `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}` }));
     }
     
     // 设置预设时间
@@ -4002,7 +4128,7 @@ class StockSimulator {
         
         const hour = this.gameTime.hour.toString().padStart(2, '0');
         const minute = this.gameTime.minute.toString().padStart(2, '0');
-        alert(`时间已设置为 ${hour}:${minute}`);
+        alert(I18n.t('debug.timeSet', { time: `${hour}:${minute}` }));
     }
 
     debugSetFund() {
@@ -4012,7 +4138,7 @@ class StockSimulator {
             this.saveUsers();
             this.updateTradeAvailable();
             this.updatePortfolio();
-            alert('资金已修改');
+            alert(I18n.t('debug.fundModified'));
         }
     }
 
@@ -4036,49 +4162,46 @@ class StockSimulator {
         // 获取所有成就
         const allAchievements = AchievementSystem.achievements;
         const currentAchievements = this.currentSave.achievements || [];
-        
+
         // 筛选出未解锁的成就
         const lockedAchievements = allAchievements.filter(ach => !currentAchievements.includes(ach.id));
-        
+
         if (lockedAchievements.length === 0) {
-            alert('🎉 恭喜！您已经解锁了所有成就！');
+            alert(I18n.t('debug.allUnlocked'));
             return;
         }
-        
+
         // 用户确认
-        const confirmMsg = `确定要解锁全部 ${lockedAchievements.length} 个成就吗？\n\n` +
-            `即将解锁的成就包括：\n` +
-            lockedAchievements.map(ach => `• ${ach.name} (${AchievementSystem.getLevelName(ach.level)})`).join('\n') +
-            `\n\n此操作将立即解锁所有成就并保存数据。`;
-        
+        const listText = lockedAchievements.map(ach => `• ${AchievementSystem.getName(ach)} (${AchievementSystem.getLevelName(ach.level)})`).join('\n');
+        const confirmMsg = I18n.t('debug.unlockAllConfirm', { count: lockedAchievements.length, list: listText });
+
         if (!confirm(confirmMsg)) {
             return;
         }
-        
+
         // 解锁所有成就
         let unlockedCount = 0;
         const newlyUnlocked = [];
-        
+
         lockedAchievements.forEach(ach => {
             this.currentSave.achievements.push(ach.id);
             newlyUnlocked.push(ach);
             unlockedCount++;
         });
-        
+
         // 同步到 users 对象，确保数据一致性
         if (this.currentUser.username && this.users[this.currentUser.username]) {
             this.users[this.currentUser.username].saves[this.currentSaveIndex] = this.currentSave;
         }
-        
+
         // 保存数据
         this.saveUsers();
-        
+
         // 显示成功提示
-        const successMsg = `✅ 成功解锁 ${unlockedCount} 个成就！\n\n` +
-            `已解锁成就：\n` +
-            newlyUnlocked.slice(0, 5).map(ach => `🏆 ${ach.name}`).join('\n') +
-            (newlyUnlocked.length > 5 ? `\n...还有 ${newlyUnlocked.length - 5} 个成就` : '');
-        
+        const listPreview = newlyUnlocked.slice(0, 5).map(ach => `🏆 ${AchievementSystem.getName(ach)}`).join('\n') +
+            (newlyUnlocked.length > 5 ? '\n' + I18n.t('debug.andMore', { count: newlyUnlocked.length - 5 }) : '');
+        const successMsg = I18n.t('debug.unlockAllSuccess', { count: unlockedCount, list: listPreview });
+
         alert(successMsg);
         
         // 显示最后一个成就的弹窗（如果有）
@@ -4096,38 +4219,35 @@ class StockSimulator {
     // 取消解锁全部成就
     debugClearAllAchievements() {
         const currentAchievements = this.currentSave.achievements || [];
-        
+
         if (currentAchievements.length === 0) {
-            alert('🔒 没有已解锁的成就！');
+            alert(I18n.t('debug.noUnlocked'));
             return;
         }
-        
+
         // 用户确认
-        const confirmMsg = `确定要取消解锁全部 ${currentAchievements.length} 个成就吗？\n\n` +
-            `此操作将清除所有成就解锁状态并保存数据。\n\n` +
-            `操作不可撤销！`;
-        
+        const confirmMsg = I18n.t('debug.clearAllConfirm', { count: currentAchievements.length });
+
         if (!confirm(confirmMsg)) {
             return;
         }
-        
+
         // 清空成就
         this.currentSave.achievements = [];
-        
+
         // 同步到 users 对象，确保数据一致性
         if (this.currentUser.username && this.users[this.currentUser.username]) {
             this.users[this.currentUser.username].saves[this.currentSaveIndex] = this.currentSave;
         }
-        
+
         // 保存数据
         this.saveUsers();
-        
+
         // 显示成功提示
-        const successMsg = `✅ 成功取消解锁所有成就！\n\n` +
-            `所有成就已重置为未解锁状态。`;
-        
+        const successMsg = I18n.t('debug.clearAllSuccess');
+
         alert(successMsg);
-        
+
         // 实时更新成就墙
         this.updateProfile();
     }
@@ -4135,9 +4255,9 @@ class StockSimulator {
     // 选择取消解锁成就
     debugClearSelectedAchievements() {
         const currentAchievements = this.currentSave.achievements || [];
-        
+
         if (currentAchievements.length === 0) {
-            alert('🔒 没有已解锁的成就！');
+            alert(I18n.t('debug.noUnlocked'));
             return;
         }
         
@@ -4149,7 +4269,7 @@ class StockSimulator {
                 selectHtml += `
                     <div style="margin-bottom: 8px; display: flex; align-items: center;">
                         <input type="checkbox" id="clear-ach-${achId}" value="${achId}" style="margin-right: 10px;">
-                        <label for="clear-ach-${achId}" style="flex: 1;">${ach.name} (${AchievementSystem.getLevelName(ach.level)})</label>
+                        <label for="clear-ach-${achId}" style="flex: 1;">${AchievementSystem.getName(ach)} (${AchievementSystem.getLevelName(ach.level)})</label>
                     </div>
                 `;
             }
@@ -4172,11 +4292,11 @@ class StockSimulator {
         
         modal.innerHTML = `
             <div class="modal-content" style="min-width: 300px; max-width: 400px;">
-                <h3>❌ 选择取消解锁成就</h3>
+                <h3>${I18n.t('debug.clearSelectedTitle')}</h3>
                 ${selectHtml}
                 <div style="display: flex; gap: 10px;">
-                    <button id="confirm-clear-btn" class="btn-primary" style="flex: 1;">确认取消解锁</button>
-                    <button id="cancel-clear-btn" class="btn-secondary" style="flex: 1;">取消</button>
+                    <button id="confirm-clear-btn" class="btn-primary" style="flex: 1;">${I18n.t('debug.confirmClear')}</button>
+                    <button id="cancel-clear-btn" class="btn-secondary" style="flex: 1;">${I18n.t('common.cancel')}</button>
                 </div>
             </div>
         `;
@@ -4194,35 +4314,33 @@ class StockSimulator {
             });
             
             if (selectedAchievements.length === 0) {
-                alert('请选择要取消解锁的成就！');
+                alert(I18n.t('debug.requireSelect'));
                 return;
             }
-            
+
             // 二次确认
-            const confirmMsg = `确定要取消解锁选中的 ${selectedAchievements.length} 个成就吗？\n\n` +
-                `操作不可撤销！`;
-            
+            const confirmMsg = I18n.t('debug.clearSelectedConfirm', { count: selectedAchievements.length });
+
             if (!confirm(confirmMsg)) {
                 return;
             }
-            
+
             // 取消解锁选中的成就
             this.currentSave.achievements = this.currentSave.achievements.filter(
                 achId => !selectedAchievements.includes(achId)
             );
-            
+
             // 同步到 users 对象，确保数据一致性
             if (this.currentUser.username && this.users[this.currentUser.username]) {
                 this.users[this.currentUser.username].saves[this.currentSaveIndex] = this.currentSave;
             }
-            
+
             // 保存数据
             this.saveUsers();
-            
+
             // 显示成功提示
-            const successMsg = `✅ 成功取消解锁 ${selectedAchievements.length} 个成就！\n\n` +
-                `成就状态已更新。`;
-            
+            const successMsg = I18n.t('debug.clearSelectedSuccess', { count: selectedAchievements.length });
+
             alert(successMsg);
             
             // 移除弹窗
@@ -4240,11 +4358,11 @@ class StockSimulator {
 
     debugResetMarket() {
         this.initMarketData();
-        alert('行情已重置');
+        alert(I18n.t('debug.marketReset'));
     }
 
     debugClearGame() {
-        if (confirm('确定清空本局所有数据吗？此操作不可恢复！')) {
+        if (confirm(I18n.t('debug.clearGameConfirm'))) {
             this.currentSave.fund = this.currentSave.initialFund;
             this.currentSave.holdings = {};
             this.currentSave.records = [];
@@ -4260,7 +4378,7 @@ class StockSimulator {
             this.saveUsers();
             this.updateTradeAvailable();
             this.updatePortfolio();
-            alert('本局数据已清空');
+            alert(I18n.t('debug.gameCleared'));
         }
     }
 
@@ -4289,12 +4407,12 @@ class StockSimulator {
                 try {
                     const decrypted = Crypto.decrypt(event.target.result);
                     const userData = JSON.parse(decrypted);
-                    
-                    if (confirm(`确定导入用户 "${userData.username}" 的存档吗？将覆盖现有数据。`)) {
+
+                    if (confirm(I18n.t('notification.importConfirm', { username: userData.username }))) {
                         this.users[userData.username] = userData;
                         this.saveUsers();
                         this.currentUser = userData;
-                        
+
                         // 恢复导入存档的主题偏好（不触发保存）
                         const savedTheme = this.currentUser.theme || 'dark';
                         document.body.className = savedTheme === 'light' ? 'light-theme' : savedTheme === 'festival' ? 'festival-theme' : '';
@@ -4302,12 +4420,17 @@ class StockSimulator {
                         if (themeToggle) {
                             themeToggle.textContent = savedTheme === 'light' ? '☀️' : savedTheme === 'festival' ? '🎉' : '🌙';
                         }
-                        
+
+                        // 恢复导入存档的语言偏好
+                        if (this.currentUser.lang) {
+                            I18n.setLanguage(this.currentUser.lang, true);
+                        }
+
                         this.showSaveSelect();
-                        alert('导入成功');
+                        alert(I18n.t('notification.importSuccess'));
                     }
                 } catch (err) {
-                    alert('导入失败：文件格式错误');
+                    alert(I18n.t('notification.importFailed'));
                 }
             };
             reader.readAsText(file);
@@ -4315,14 +4438,27 @@ class StockSimulator {
         input.click();
     }
 
-    // 工具函数
+    // 工具函数（支持国际化的金额格式化）
     formatMoney(amount) {
-        if (amount >= 100000000) {
-            return (amount / 100000000).toFixed(2) + '亿';
-        } else if (amount >= 10000) {
-            return (amount / 10000).toFixed(2) + '万';
+        if (window.I18n && I18n.getCurrentLanguage() === 'en-US') {
+            // 英文：使用 K/M/B 体系
+            if (Math.abs(amount) >= 1000000000) {
+                return (amount / 1000000000).toFixed(2) + 'B';
+            } else if (Math.abs(amount) >= 1000000) {
+                return (amount / 1000000).toFixed(2) + 'M';
+            } else if (Math.abs(amount) >= 1000) {
+                return (amount / 1000).toFixed(2) + 'K';
+            }
+            return amount.toFixed(2);
+        } else {
+            // 中文：使用 万/亿 体系
+            if (Math.abs(amount) >= 100000000) {
+                return (amount / 100000000).toFixed(2) + '亿';
+            } else if (Math.abs(amount) >= 10000) {
+                return (amount / 10000).toFixed(2) + '万';
+            }
+            return amount.toFixed(2);
         }
-        return amount.toFixed(2);
     }
 
     showScreen(screenId) {
@@ -4408,23 +4544,23 @@ class StockSimulator {
             if (conditionTypeSelect.value === 'profit') {
                 // 如果当前选中的是盈利目标，切换到价格阈值
                 conditionTypeSelect.value = 'price';
-                this.showNotification('买入操作不支持盈利目标触发条件，已自动切换为价格阈值', 'warning');
+                this.showNotification(I18n.t('auto.profitDisabledTip'), 'warning');
             }
             profitOption.disabled = true;
-            profitOption.textContent = '盈利目标 (仅卖出可用)';
-            
+            profitOption.textContent = I18n.t('auto.profitDisabledOption');
+
             // 显示提示信息
             if (!profitTip) {
                 const tipDiv = document.createElement('div');
                 tipDiv.id = 'profit-tip';
                 tipDiv.className = 'form-tip';
-                tipDiv.textContent = '提示：盈利目标触发条件仅适用于卖出操作';
+                tipDiv.textContent = I18n.t('auto.profitTip');
                 conditionTypeSelect.parentNode.appendChild(tipDiv);
             }
         } else {
             // 卖出方向：启用盈利目标选项
             profitOption.disabled = false;
-            profitOption.textContent = '盈利目标';
+            profitOption.textContent = I18n.t('auto.conditionTypeProfit');
             
             // 移除提示信息
             if (profitTip) {
@@ -4473,13 +4609,13 @@ class StockSimulator {
         const maxAmount = parseFloat(document.getElementById('auto-max-amount').value);
 
         if (!code) {
-            alert('请输入股票代码');
+            alert(I18n.t('auto.requireStockCode'));
             return;
         }
 
         const stock = StockPool.find(s => s.code === code);
         if (!stock) {
-            alert('股票代码不存在');
+            alert(I18n.t('auto.stockNotExist'));
             return;
         }
 
@@ -4488,33 +4624,33 @@ class StockSimulator {
         const editingIndex = this.autoTrade.editingIndex;
 
         // 检查是否已存在相同代码和方向的配置（编辑模式下排除当前编辑的配置）
-        const existingConfig = this.autoTrade.configs.find((c, idx) => 
+        const existingConfig = this.autoTrade.configs.find((c, idx) =>
             c.code === code && c.direction === direction && (!isEditing || idx !== editingIndex)
         );
         if (existingConfig) {
-            alert(`该股票的${direction === 'buy' ? '买入' : '卖出'}订单已在自动交易列表中`);
+            alert(I18n.t('auto.duplicateConfig', { direction: I18n.t(direction === 'buy' ? 'auto.directionBuy' : 'auto.directionSell') }));
             return;
         }
 
         if (!quantity || quantity <= 0) {
-            alert('请输入有效的交易数量');
+            alert(I18n.t('auto.invalidQuantity'));
             return;
         }
 
         // 时间间隔模式不需要条件值
         if (conditionType !== 'time' && isNaN(conditionValue)) {
-            alert('请输入触发条件值');
+            alert(I18n.t('auto.requireConditionValue'));
             return;
         }
 
         // 盈利目标模式只支持卖出操作
         if (conditionType === 'profit' && direction !== 'sell') {
-            alert('盈利目标触发条件仅适用于卖出操作');
+            alert(I18n.t('auto.profitOnlyForSell'));
             return;
         }
 
         if (priceType === 'limit' && isNaN(limitPrice)) {
-            alert('请输入限价');
+            alert(I18n.t('auto.requireLimitPrice'));
             return;
         }
 
@@ -4538,21 +4674,21 @@ class StockSimulator {
         if (isEditing) {
             // 更新原有配置
             this.autoTrade.configs[editingIndex] = config;
-            this.showNotification('配置已更新');
-            
+            this.showNotification(I18n.t('auto.configUpdated'));
+
             // 清除编辑状态
             this.autoTrade.editingIndex = null;
-            
+
             // 恢复按钮文本
             const addBtn = document.getElementById('add-auto-stock-btn');
             if (addBtn) {
-                addBtn.textContent = '添加股票';
+                addBtn.textContent = I18n.t('auto.addStockBtn');
                 addBtn.dataset.editing = 'false';
             }
         } else {
             // 添加新配置
             this.autoTrade.configs.push(config);
-            this.showNotification('股票已添加到自动交易列表');
+            this.showNotification(I18n.t('auto.stockAdded'));
         }
         
         this.renderAutoTradeStockList();
@@ -4581,7 +4717,7 @@ class StockSimulator {
             // 恢复按钮文本
             const addBtn = document.getElementById('add-auto-stock-btn');
             if (addBtn) {
-                addBtn.textContent = '添加股票';
+                addBtn.textContent = I18n.t('auto.addStockBtn');
                 addBtn.dataset.editing = 'false';
             }
             // 清空表单
@@ -4594,11 +4730,11 @@ class StockSimulator {
             // 如果删除的配置在正在编辑的配置之前，调整编辑索引
             this.autoTrade.editingIndex--;
         }
-        
+
         this.autoTrade.configs.splice(index, 1);
         this.renderAutoTradeStockList();
         this.saveAutoTradeState();
-        this.showNotification('股票已从自动交易列表移除');
+        this.showNotification(I18n.t('auto.stockRemoved'));
     }
 
     // 编辑自动交易股票
@@ -4640,11 +4776,11 @@ class StockSimulator {
         // 更新按钮文本
         const addBtn = document.getElementById('add-auto-stock-btn');
         if (addBtn) {
-            addBtn.textContent = '保存修改';
+            addBtn.textContent = I18n.t('common.saveEdit');
             addBtn.dataset.editing = 'true';
         }
-        
-        this.showNotification('已加载到编辑表单，修改后点击保存修改');
+
+        this.showNotification(I18n.t('auto.editLoaded'));
     }
 
     // 保存自动交易状态到存档
@@ -4652,20 +4788,20 @@ class StockSimulator {
         // 验证当前存档访问权限
         if (!this.currentSave) {
             console.error('保存自动交易状态失败：当前没有加载存档');
-            this.showNotification('保存失败：未加载存档', 'error');
+            this.showNotification(I18n.t('auto.saveFailedNoSave'), 'error');
             return false;
         }
-        
+
         if (!this.currentUser || !this.currentUser.saves[this.currentSaveIndex]) {
             console.error('保存自动交易状态失败：存档访问越权');
-            this.showNotification('保存失败：存档访问异常', 'error');
+            this.showNotification(I18n.t('auto.saveFailedAccess'), 'error');
             return false;
         }
-        
+
         // 验证存档ID匹配
         if (this.currentSave.id !== this.currentUser.saves[this.currentSaveIndex].id) {
             console.error('保存自动交易状态失败：存档ID不匹配');
-            this.showNotification('保存失败：存档数据异常', 'error');
+            this.showNotification(I18n.t('auto.saveFailedData'), 'error');
             return false;
         }
         
@@ -4748,7 +4884,7 @@ class StockSimulator {
         // 验证当前存档访问权限
         if (!this.currentSave) {
             console.error('重置自动交易配置失败：当前没有加载存档');
-            this.showNotification('重置失败：未加载存档', 'error');
+            this.showNotification(I18n.t('auto.resetFailedNoSave'), 'error');
             return false;
         }
         
@@ -4795,57 +4931,57 @@ class StockSimulator {
         this.renderAutoTradeStockList();
         this.updateAutoTradeControlButtons();
         
-        this.showNotification('自动交易配置已重置');
+        this.showNotification(I18n.t('auto.configReset'));
         return true;
     }
 
     // 渲染自动交易股票列表
     renderAutoTradeStockList() {
         const container = document.getElementById('auto-trade-stocks-container');
-        
+
         if (this.autoTrade.configs.length === 0) {
-            container.innerHTML = '<p class="empty-tip">暂无股票，请添加</p>';
+            container.innerHTML = `<p class="empty-tip">${I18n.t('auto.emptyTip')}</p>`;
             return;
         }
-        
+
         container.innerHTML = this.autoTrade.configs.map((config, index) => {
             const conditionText = this.getConditionText(config);
             return `
                 <div class="auto-trade-stock-item ${config.direction}">
                     <div class="auto-trade-stock-info">
-                        <div class="stock-code">${config.name} (${config.code}) - ${config.direction === 'buy' ? '买入' : '卖出'}</div>
-                        <div class="stock-condition">${conditionText} | 数量: ${config.quantity} | ${config.priceType === 'market' ? '市价' : '限价'}</div>
+                        <div class="stock-code">${config.name} (${config.code}) - ${I18n.t(config.direction === 'buy' ? 'auto.directionBuy' : 'auto.directionSell')}</div>
+                        <div class="stock-condition">${conditionText} | ${I18n.t('auto.quantityLabel')}: ${config.quantity} | ${I18n.t(config.priceType === 'market' ? 'auto.marketPriceLabel' : 'auto.limitPriceLabel')}</div>
                     </div>
                     <div class="auto-trade-stock-actions">
-                        <button class="btn-edit" onclick="game.editAutoTradeStock(${index})">编辑</button>
-                        <button class="btn-delete" onclick="game.removeAutoTradeStock(${index})">删除</button>
+                        <button class="btn-edit" onclick="game.editAutoTradeStock(${index})">${I18n.t('common.edit')}</button>
+                        <button class="btn-delete" onclick="game.removeAutoTradeStock(${index})">${I18n.t('common.delete')}</button>
                     </div>
                 </div>
             `;
         }).join('');
     }
 
-    // 获取条件描述文本
+    // 获取条件描述文本（支持国际化）
     getConditionText(config) {
-        const operatorMap = { above: '高于', below: '低于', equal: '等于' };
-        const typeMap = { price: '价格', percentage: '涨跌幅', profit: '盈利目标', time: '时间间隔' };
-        
+        const operatorMap = { above: 'auto.operatorAbove', below: 'auto.operatorBelow', equal: 'auto.operatorEqual' };
+        const typeMap = { price: 'auto.conditionTextPrice', percentage: 'auto.conditionTextPercentage', profit: 'auto.conditionTextProfit', time: 'auto.conditionTypeTime' };
+
         if (config.conditionType === 'time') {
-            return '时间间隔触发';
+            return I18n.t('auto.conditionTextTime');
         }
-        
-        return `${typeMap[config.conditionType]}${operatorMap[config.conditionOperator]}${config.conditionValue}${config.conditionType === 'percentage' ? '%' : '元'}`;
+
+        return `${I18n.t(typeMap[config.conditionType])}${I18n.t(operatorMap[config.conditionOperator])}${config.conditionValue}${config.conditionType === 'percentage' ? '%' : I18n.t('auto.unitYuan')}`;
     }
 
     startAutoTrade() {
         const code = document.getElementById('auto-code').value;
         // 检查是否有股票配置
         if (this.autoTrade.configs.length === 0) {
-            alert('请先添加至少一只股票到自动交易列表');
+            alert(I18n.t('auto.requireStock'));
             return;
         }
 
-        if (!confirm(`确认启动自动交易吗？\n\n已添加 ${this.autoTrade.configs.length} 只股票到自动交易列表，系统将自动监控并执行交易。`)) {
+        if (!confirm(I18n.t('auto.startConfirm', { count: this.autoTrade.configs.length }))) {
             return;
         }
 
@@ -4869,7 +5005,7 @@ class StockSimulator {
         }
         
         this.updateAutoTradeStatus();
-        this.showNotification(`自动交易已启动，正在监控 ${this.autoTrade.configs.length} 只股票`);
+        this.showNotification(I18n.t('auto.started', { count: this.autoTrade.configs.length }));
     }
 
     pauseAutoTrade() {
@@ -4914,13 +5050,13 @@ class StockSimulator {
         }
         
         this.updateAutoTradeStatus();
-        this.showNotification(this.autoTrade.paused ? '自动交易已暂停' : '自动交易已恢复');
+        this.showNotification(I18n.t(this.autoTrade.paused ? 'auto.paused' : 'auto.resumed'));
     }
 
     stopAutoTrade() {
         if (!this.autoTrade.enabled) return;
         
-        if (!confirm('确认停止自动交易吗？\n\n注意：停止后配置将保留，您可以重新启动。')) {
+        if (!confirm(I18n.t('auto.stopConfirm'))) {
             return;
         }
 
@@ -4938,7 +5074,7 @@ class StockSimulator {
         this.saveAutoTradeState();
         
         this.updateAutoTradeStatus();
-        this.showNotification('自动交易已停止，配置已保留');
+        this.showNotification(I18n.t('auto.stopped'));
     }
 
     checkAutoTradeCondition() {
@@ -5071,36 +5207,36 @@ class StockSimulator {
         const data = this.stockData.get(config.code);
         if (!data) {
             console.log(`交易失败: 无法获取股票数据 ${config.code}`);
-            this.addAutoTradeRecord(false, 0, '无法获取股票数据', 0, config);
+            this.addAutoTradeRecord(false, 0, I18n.t('auto.noStockData'), 0, config);
             return;
         }
-        
+
         const price = config.priceType === 'market' ? data.price : config.limitPrice;
         const amount = price * config.quantity;
-        const fee = config.direction === 'buy' 
+        const fee = config.direction === 'buy'
             ? amount * this.currentSave.settings.buyFee
             : amount * this.currentSave.settings.sellFee;
-        
+
         console.log(`交易详情: 价格=${price}, 数量=${config.quantity}, 金额=${amount.toFixed(2)}, 手续费=${fee.toFixed(2)}`);
 
         // 检查价格有效性
         if (price <= 0) {
             console.log(`交易失败: 价格无效 ${price}`);
-            this.addAutoTradeRecord(false, 0, '价格无效', 0, config);
+            this.addAutoTradeRecord(false, 0, I18n.t('auto.invalidPrice'), 0, config);
             return;
         }
 
         // 数量有效性
         if (config.quantity <= 0) {
             console.log(`交易失败: 数量无效 ${config.quantity}`);
-            this.addAutoTradeRecord(false, 0, '数量无效', 0, config);
+            this.addAutoTradeRecord(false, 0, I18n.t('auto.invalidQuantityMsg'), 0, config);
             return;
         }
 
         // 熔断状态检查
         if (this.limitManager.isCircuitBreakerActive(config.code)) {
             console.log(`交易失败: ${config.name} 处于熔断状态`);
-            this.addAutoTradeRecord(false, 0, '该股票处于熔断状态', 0, config);
+            this.addAutoTradeRecord(false, 0, I18n.t('auto.circuitBreakerActive'), 0, config);
             return;
         }
 
@@ -5109,12 +5245,12 @@ class StockSimulator {
         const limitDownPrice = this.limitManager.calculateLimitDownPrice(data.prevClose);
         if (config.direction === 'buy' && price > limitUpPrice) {
             console.log(`交易失败: 买入价 ${price} 超过涨停价 ${limitUpPrice.toFixed(2)}`);
-            this.addAutoTradeRecord(false, 0, `买入价超过涨停价 ${limitUpPrice.toFixed(2)}`, 0, config);
+            this.addAutoTradeRecord(false, 0, I18n.t('auto.buyExceedLimitUp', { price: limitUpPrice.toFixed(2) }), 0, config);
             return;
         }
         if (config.direction === 'sell' && price < limitDownPrice) {
             console.log(`交易失败: 卖出价 ${price} 低于跌停价 ${limitDownPrice.toFixed(2)}`);
-            this.addAutoTradeRecord(false, 0, `卖出价低于跌停价 ${limitDownPrice.toFixed(2)}`, 0, config);
+            this.addAutoTradeRecord(false, 0, I18n.t('auto.sellBelowLimitDown', { price: limitDownPrice.toFixed(2) }), 0, config);
             return;
         }
 
@@ -5124,13 +5260,13 @@ class StockSimulator {
         const upperBound = data.price * (1 + MAX_PRICE_DEVIATION);
         if (price < lowerBound || price > upperBound) {
             console.log(`交易失败: 委托价 ${price} 与市价 ${data.price.toFixed(2)} 偏离超过${MAX_PRICE_DEVIATION * 100}%`);
-            this.addAutoTradeRecord(false, 0, `委托价与市价偏离超过${MAX_PRICE_DEVIATION * 100}%`, 0, config);
+            this.addAutoTradeRecord(false, 0, I18n.t('auto.priceDeviationExceeded', { percent: MAX_PRICE_DEVIATION * 100 }), 0, config);
             return;
         }
 
         if (config.maxAmount && amount > config.maxAmount) {
             console.log(`交易失败: 超过单次最大金额限制 ${config.maxAmount}`);
-            this.addAutoTradeRecord(false, 0, '超过单次最大金额限制', 0, config);
+            this.addAutoTradeRecord(false, 0, I18n.t('auto.exceedMaxAmount'), 0, config);
             return;
         }
 
@@ -5139,7 +5275,7 @@ class StockSimulator {
         const maxTotal = this.autoTrade.maxTotalTrades || 100;
         if (totalTrades >= maxTotal) {
             console.log(`交易失败: 超过全局最大交易次数限制 ${maxTotal}`);
-            this.addAutoTradeRecord(false, 0, `超过全局最大交易次数限制 ${maxTotal}`, 0, config);
+            this.addAutoTradeRecord(false, 0, I18n.t('auto.exceedMaxTotalTrades', { max: maxTotal }), 0, config);
             return;
         }
 
@@ -5152,14 +5288,14 @@ class StockSimulator {
         if (config.direction === 'buy') {
             const totalCost = amount + fee;
             if (totalCost > this.currentSave.fund) {
-                this.addAutoTradeRecord(false, 0, '资金不足', 0, config);
+                this.addAutoTradeRecord(false, 0, I18n.t('trade.insufficientFund'), 0, config);
                 return;
             }
 
             if (!this.currentSave.settings.t0Mode) {
                 const dayTrades = this.currentSave.dayTrades[config.code] || { buy: 0, sell: 0 };
                 if (dayTrades.sell > 0) {
-                    this.addAutoTradeRecord(false, 0, 'T+1规则限制', 0, config);
+                    this.addAutoTradeRecord(false, 0, I18n.t('auto.t1Blocked'), 0, config);
                     return;
                 }
             }
@@ -5186,7 +5322,7 @@ class StockSimulator {
             }
             this.currentSave.dayTrades[config.code].buy += config.quantity;
 
-            this.addAutoTradeRecord(true, -totalCost, '买入成功', 0, config);
+            this.addAutoTradeRecord(true, -totalCost, I18n.t('auto.buySuccess'), 0, config);
             
             // 增加该股票的交易次数
             const stockTradeKey = config.code + '-' + config.direction;
@@ -5206,7 +5342,7 @@ class StockSimulator {
             
             if (!holding || holding.quantity < config.quantity) {
                 console.log(`卖出失败: 持仓不足, 当前持仓=${holding?.quantity || 0}, 需要卖出=${config.quantity}`);
-                this.addAutoTradeRecord(false, 0, '持仓不足', 0, config);
+                this.addAutoTradeRecord(false, 0, I18n.t('auto.insufficientHolding'), 0, config);
                 return;
             }
 
@@ -5216,7 +5352,7 @@ class StockSimulator {
                 console.log(`T+1检查: 总持仓=${holding.quantity}, 当日买入=${dayTrades.buy}, 可卖数量=${availableQty}`);
                 if (config.quantity > availableQty) {
                     console.log(`卖出失败: T+1规则限制, 可卖数量=${availableQty}, 需要卖出=${config.quantity}`);
-                    this.addAutoTradeRecord(false, 0, 'T+1规则限制', 0, config);
+                    this.addAutoTradeRecord(false, 0, I18n.t('auto.t1Blocked'), 0, config);
                     return;
                 }
             }
@@ -5241,7 +5377,7 @@ class StockSimulator {
             }
             this.currentSave.dayTrades[config.code].sell += config.quantity;
 
-            this.addAutoTradeRecord(true, totalIncome, '卖出成功', pnl, config, holding, price);
+            this.addAutoTradeRecord(true, totalIncome, I18n.t('auto.sellSuccess'), pnl, config, holding, price);
             
             // 增加该股票的交易次数
             const stockTradeKey = config.code + '-' + config.direction;
@@ -5276,7 +5412,12 @@ class StockSimulator {
         this.checkAchievements();
         
         // 显示交易通知
-        this.showNotification(`${config.direction === 'buy' ? '买入' : '卖出'} ${config.name} ${config.quantity}股 @ ¥${price.toFixed(2)}`);
+        this.showNotification(I18n.t('auto.tradeNotification', {
+            direction: I18n.t(config.direction === 'buy' ? 'auto.directionBuy' : 'auto.directionSell'),
+            name: config.name,
+            quantity: config.quantity,
+            price: price.toFixed(2)
+        }));
     }
 
     addAutoTradeRecord(success, amount, message, pnl = 0, config = null, holding = null, currentPrice = 0) {
@@ -5323,24 +5464,24 @@ class StockSimulator {
         const stopBtn = document.getElementById('stop-auto-trade-btn');
 
         if (!this.autoTrade.enabled) {
-            statusText.textContent = '未启动';
+            statusText.textContent = I18n.t('auto.statusStopped');
             statusIndicator.className = 'status-indicator';
             startBtn.disabled = false;
             pauseBtn.disabled = true;
             stopBtn.disabled = true;
         } else if (this.autoTrade.paused) {
-            statusText.textContent = '已暂停';
+            statusText.textContent = I18n.t('auto.statusPaused');
             statusIndicator.className = 'status-indicator paused';
             startBtn.disabled = true;
             pauseBtn.disabled = false;
-            pauseBtn.textContent = '恢复';
+            pauseBtn.textContent = I18n.t('auto.resume');
             stopBtn.disabled = false;
         } else {
-            statusText.textContent = '运行中';
+            statusText.textContent = I18n.t('auto.statusRunning');
             statusIndicator.className = 'status-indicator running';
             startBtn.disabled = true;
             pauseBtn.disabled = false;
-            pauseBtn.textContent = '暂停';
+            pauseBtn.textContent = I18n.t('auto.pause');
             stopBtn.disabled = false;
         }
     }
@@ -5357,35 +5498,35 @@ class StockSimulator {
         const recordsList = document.getElementById('auto-trade-records-list');
         
         if (this.autoTrade.records.length === 0) {
-            recordsList.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px;">暂无交易记录</p>';
+            recordsList.innerHTML = `<p style="text-align:center;color:var(--text-secondary);padding:20px;">${I18n.t('auto.noRecords')}</p>`;
         } else {
             recordsList.innerHTML = this.autoTrade.records.map(record => {
                 const date = new Date(record.time);
                 const pnlClass = record.pnl >= 0 ? 'up' : 'down';
                 const pnlSymbol = record.pnl >= 0 ? '+' : '';
-                
-                let detailsHtml = `<div class="time">${date.toLocaleString()}</div>`;
+
+                let detailsHtml = `<div class="time">${date.toLocaleString(I18n.getCurrentLanguage())}</div>`;
                 detailsHtml += `<div class="details">${record.message}</div>`;
-                
+
                 if (record.code) {
                     detailsHtml += `<div class="stock-info">${record.name} (${record.code})</div>`;
                 }
-                
+
                 if (record.direction === 'sell' && record.buyPrice > 0) {
                     detailsHtml += `<div class="trade-details">
-                        买入价: ¥${record.buyPrice.toFixed(2)} | 卖出价: ¥${record.sellPrice.toFixed(2)} | 盈亏: ${pnlSymbol}${record.pnlPercent}%
+                        ${I18n.t('auto.buyPriceLabel')}: ¥${record.buyPrice.toFixed(2)} | ${I18n.t('auto.sellPriceLabel')}: ¥${record.sellPrice.toFixed(2)} | ${I18n.t('auto.pnlLabel')}: ${pnlSymbol}${record.pnlPercent}%
                     </div>`;
                 }
-                
+
                 if (record.conditionType) {
-                    const conditionText = this.getConditionText({ 
-                        conditionType: record.conditionType, 
-                        conditionOperator: record.conditionType === 'profit' ? 'above' : 'equal', 
-                        conditionValue: record.conditionValue 
+                    const conditionText = this.getConditionText({
+                        conditionType: record.conditionType,
+                        conditionOperator: record.conditionType === 'profit' ? 'above' : 'equal',
+                        conditionValue: record.conditionValue
                     });
-                    detailsHtml += `<div class="condition-info">触发条件: ${conditionText}</div>`;
+                    detailsHtml += `<div class="condition-info">${I18n.t('auto.conditionTriggerLabel')}: ${conditionText}</div>`;
                 }
-                
+
                 return `
                     <div class="record-item ${record.success ? 'success' : 'failed'}">
                         <div class="record-info">
@@ -5393,7 +5534,7 @@ class StockSimulator {
                         </div>
                         <div class="record-result">
                             <div class="amount ${record.pnl >= 0 ? 'up' : 'down'}">${record.pnl !== 0 ? `${pnlSymbol}¥${this.formatMoney(record.pnl)}` : '--'}</div>
-                            <div class="status">${record.success ? '成功' : '失败'}</div>
+                            <div class="status">${record.success ? I18n.t('common.statusSuccess') : I18n.t('common.statusFailed')}</div>
                         </div>
                     </div>
                 `;
@@ -5452,7 +5593,7 @@ class StockSimulator {
 `;
         
         console.log(report);
-        this.showNotification('影视飓风股票添加成功，上涨概率设置生效', 'success');
+        this.showNotification(I18n.t('auto.specialStockAdded'), 'success');
         
         // 显示详细报告
         alert(report);
@@ -5463,7 +5604,7 @@ class StockSimulator {
     // 修复异常持仓数据
     fixAbnormalHoldings() {
         if (!this.currentSave) {
-            this.showNotification('修复失败：未加载存档', 'error');
+            this.showNotification(I18n.t('auto.fixFailedNoSave'), 'error');
             return false;
         }
 
@@ -5482,9 +5623,9 @@ class StockSimulator {
         if (fixed) {
             this.saveUsers();
             this.updatePortfolio();
-            this.showNotification('异常持仓数据已修复');
+            this.showNotification(I18n.t('notification.fixApplied'));
         } else {
-            this.showNotification('未发现异常持仓数据');
+            this.showNotification(I18n.t('notification.fixNotFound'));
         }
 
         return fixed;
